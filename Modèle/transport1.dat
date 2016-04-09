@@ -1,0 +1,75 @@
+data;
+
+/* Nombre de fournisseurs */
+param nf := 3;
+
+/* Nombre de plates formes */
+param np := 3;
+
+/* Nombre de clients */
+param nc := 4;
+
+/* si >0 demande, si < 0 dispo du noeud */
+param b :=	1	-4
+			2	-8
+			3	-6
+			7	4
+			8	5
+			9	7
+			10	2;
+
+/* Capa de l'arc */	
+param u:		4	5	6	7	8	9	10 :=
+		1	5	5	5	.	.	.	.
+		2	5	5	5	.	.	.	.
+		3	5	5	5	.	.	.	.
+		4	.	.	.	5	5	5	5
+		5	.	.	.	5	5	5	5
+		6	.	.	.	5	5	5	5;
+
+/* Coût fixe de l'arc */
+param c:		4	5	6	7	8	9	10 :=
+		1	3	3	3	.	.	.	.
+		2	3	3	3	.	.	.	.
+		3	3	3	3	.	.	.	.
+		4	.	.	.	3	3	3	3
+		5	.	.	.	3	3	3	3
+		6	.	.	.	3	3	3	3;
+
+/* Coût variable de l'arc */
+param h :	4	5	6	7	8	9	10 :=
+		1	2	2	2	.	.	.	.
+		2	2	2	2	.	.	.	.
+		3	2	2	2	.	.	.	.
+		4	.	.	.	2	2	2	2
+		5	.	.	.	2	2	2	2
+		6	.	.	.	2	2	2	2;
+
+/* temps de transport sur l'arc */
+param t :	4	5	6	7	8	9	10 :=
+		1	3	3	3	.	.	.	.
+		2	3	3	3	.	.	.	.
+		3	3	3	3	.	.	.	.
+		4	.	.	.	3	3	3	3
+		5	.	.	.	3	3	3	3
+		6	.	.	.	3	3	3	3;
+
+/* Coût unitaire de transbordement (platesformes) */
+param g :=	4	10
+			5	15
+			6	5;
+
+/* Temps de transbordement (platesformes) */
+param s :=	4	5
+			5	3
+			6	10;
+
+/* Temps maximal du transport de chaque produit */
+param T := 1000;
+
+end;
+
+
+
+
+

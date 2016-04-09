@@ -1,0 +1,120 @@
+\documentclass[a4paper, 12pt]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[francais]{babel}
+% \usepackage{geomery}
+
+\title{AG41 - Transbordement}
+\author{Staine Florian}
+\date\today
+
+\setlength{\hoffset}{-18pt}        
+\setlength{\oddsidemargin}{0pt} 	% Marge gauche sur pages impaires
+\setlength{\evensidemargin}{9pt} 	% Marge gauche sur pages paires
+\setlength{\marginparwidth}{54pt} 	% Largeur de note dans la marge
+\setlength{\textwidth}{485pt} 		% Largeur de la zone de texte (17cm)
+\setlength{\voffset}{-18pt} 		% Bon pour DOS
+\setlength{\marginparsep}{7pt} 		% Séparation de la marge
+\setlength{\topmargin}{0pt} 		% Pas de marge en haut
+\setlength{\headheight}{5pt} 		% Haut de page
+\setlength{\headsep}{5pt} 		% Entre le haut de page et le texte
+\setlength{\footskip}{27pt} 		% Bas de page + séparation
+\setlength{\textheight}{708pt} 		% Hauteur de la zone de texte (25cm)
+
+\begin{document}
+\maketitle
+\parindent=0em
+
+\chapter{Objectif}
+L'objectif de ce projet est de résoudre un problème d'optimisation exacte, 
+dérivé d'un problème de transport. 
+\section{Problème}
+En plus de devoir transiter d'un fournisseur à un client, 
+les ressources doivent passer par une plateforme de transbrdement.
+
+\paragraph{Chaque arc possède : }
+\begin{itemize}
+ \item une capacité maximale
+ \item un coût fixe ainsi qu'un coût unitaire d'utilisation
+ \item un temps de transport
+\end{itemize}
+
+\paragraph{Chaque plateforme possède : }
+\begin{itemize}
+ \item un coût unitaire de transbordement
+ \item un temps de transbordement\newline
+\end{itemize}
+
+Le coût total est constitué de la somme de plusieurs coûts :\\
+En effet, si un arc transporte un ou plusieurs produit, son coût fixe sera pris en compte, 
+en plus du coût unitaire multiplié par le nombre de produits transportés.
+Pour chaque produit transitant par une plateforme, un coût unitaire de transbordement sera ajouté au coût total.\\
+
+Nous avons aussi d'autres contraintes que dans le problème initial.\\
+Tout d'abbord, les arc ont tous une capacité maximale, ce qui signifique 
+qu'il ne peut transiter plus de produit que la capacité maximale. 
+Les arc sont utilisés au maximum une fois, ils ne peut pas y avoir des aller-retour 
+pour transporter plus de ressources.\\
+Un temps maximal de transport devra être respecté pour le transport de toutes les ressources.
+De plus, tous les produits partent au même moment et sont transportés en parallèles. 
+Cela signifie que pour chaque cheminement emprunté pour atteindre les clients,
+les temps de transport plus le temps de transbordement doivent être inférieurs au temps maximum autorisé.
+
+\chapter{Modèle mathématique}
+\section{Paramètres}
+$n$ : nombre total de noeuds\\
+$n_f$ : nombre de noeuds fournisseurs\\
+$n_p$ : nombre de noeuds plates-formes\\
+$n_c$ : nombre de noeuds clients \newline
+
+$b_i$ : demande ou disponibilité du n\oe{}ud\\
+$g_i$ : Coût unitaire de transbordement\\
+$s_i$ : Temps de transbordement\newline
+
+$u_{i,j}$ : Capacité de l'arc $(i,j)$\\
+$c_{i,j}$ : Coût fixe de l'arc $(i,j)$\\
+$h_{i,j}$ : Coût unitaire de l'arc $(i,j)$\\
+$t_{i,j}$ : Temps de transport de l'arc $(i,j)$
+
+\section{Variables}
+$x_{i,j}$ : nombre de produit transportés par l'arc $(i,j)$\\
+$y_{i,j,k}$ : Nombre de produits transportés par la route $(i,j)\ (j,k)$\\
+
+\section{Objectif}
+$ min\ z = \sum_{i=1,\ j=1,\ x_{i,j}\not=0\ }^{n_f,\ n_p}
+	(x_{i,j} \cdot h_{i,j} + c_{i,j} + x_{i,j} \cdot g_j) 
+	    + \sum_{j=1,\ k=1,\ x{i,j} \not=0}^{n_p,\ n_c}(x_{j,k} \cdot h_{j,k} + c_{j,k})$
+
+\section{Contraintes}
+$ (C1):\ \forall (i,j)\in n^2,\ x_{i,j} \leq u_{i,j} $ \\
+$ (C2):\ \forall i\in n, \ \sum_{j=1}^{n}(x_{i,j} - x_{j,i}) = -b_i$\\
+$ (C3):\ \forall (i,j)\in n^2,\ \sum_{k=1}^{n_c} y_{i,j,k} + \sum_{k=1}^{n_f} y_{k,j,i} = x_{i,j}$\\
+$ (C4):\ \forall (i,j,k)\in n^3,\ y_{i,j,k} \not= 0,\ 
+	t_{i,j} + t_{j,k} + s_j \leq T$\\
+
+\chapter{Résolution algoritmique}
+\section{Algoritme utilisé}
+
+\parindent=0em
+Pour résoudre ce problème, un algoritme de type Branch and Bound sera utilisé.
+Cela consiste à séparer en deux l'ensemble des solutions selon s'il ont fait un choix ou son contraire.
+Certains choix sont évités s'ils possèdent une borne minimal de l'objectif plus grand qu'une solution déjà éxistante. 
+
+\section{Problèmes à résoudres}
+En premier lieu il est nécessaire de calculer une permière solution. 
+Cela permet d'éviter toutes les solutions plus mauvaises que cette permière.
+Plus cette première solution sera proche de la solution finale, 
+plus il sera facile de converger rapidement vers la solution optimale car un plus grand nombre de choix seront évités.
+\newline{}
+\newline{}
+Ensuite, une borne minimum la plus élevée possible doit être définie 
+pour permetre d'éliminer les solution moins efficace que la solution déjà existante. 
+Tout le temps de résolution du problème est dépendant de ces deux algoritmes, 
+qui sont le choix d'une première solution efficace et le calcul d'une borne inférieure. 
+\newline{}
+\newline{}
+Ensuite, il est possible d'éliminer certains choix lorsqu'il n'est pas possible de résoudre le problème 
+à partir d'un sous-ensemble en solutions, cela permet encore un gain de temps non négligeable dans la résolution.
+
+\end{document}
