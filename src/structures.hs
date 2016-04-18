@@ -1,17 +1,27 @@
+module Structures where
 
-data Array2D = [[Int]]
+data Node = Node {
+    n_id :: Int,
+    n_b :: Int,
+    n_g :: Int,
+    n_s :: Int
+} deriving Show
+
+data Edge = Edge {
+    e_id :: Int,
+    e_start :: Int,
+    e_end :: Int,
+    e_u :: Int,
+    e_c :: Int,
+    e_h :: Int,
+    e_t :: Int
+} deriving Show
 
 data Problem = Problem {
-    name :: String,
-    nbNode :: Int,
-    nbEdge :: Int,
-    T :: Int,
-    b :: [Int],     -- Demand of node : <0 for depots, >0 for clients, =0 for plaateforms
-    g :: [Int],     -- unitary cost
-    s :: [Int],     -- transhipment time
-
-    u :: Array2D,   -- capacity
-    c :: Array2D,   -- fixed cost
-    h :: Array2D,   -- unitary cost
-    t :: Array2D,   -- delivring time
-} deriving (show)
+    pb_name :: String,
+    pb_nbNode :: Int,
+    pb_nbEdge :: Int,
+    pb_maxTime :: Int,
+    pb_nodes :: [Node],
+    pb_edges :: [Edge]
+} deriving Show
