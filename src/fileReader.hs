@@ -3,6 +3,7 @@ module FileReader where
 import System.IO
 import Control.Monad
 
+import qualified Data.Map as Map
 import Data.Char
 import Data.List
 import Data.String
@@ -32,15 +33,26 @@ main = do
     pb <- initProblem file
     putStrLn $ show $ pb
 
+getPb :: IO Problem
+getPb = do
+    file <- openFile "../data/transshipment1.txt" ReadMode
+    pb <- initProblem file
+    return pb
+
+getPb0 :: IO Problem
+getPb0 = do
+    file <- openFile "../data/transshipment0.txt" ReadMode
+    pb <- initProblem file
+    return pb
+
 initProblem :: Handle -> IO Problem
 initProblem file = do
-    pb <- lineReader file (Problem "" 0 0 0 [] [])
+    pb <- lineReader file newProblem
     return pb
 
 lineReader :: Handle -> Problem -> IO Problem
 lineReader file pb = do
     l <- hGetLine file
-    putStrLn l
     if "EOF" `isPrefixOf` l
         then return pb
         else lineReader file (updateProblem l pb)
@@ -79,7 +91,7 @@ setTime :: Problem -> Int -> Problem
 setTime pb p_time = pb {pb_maxTime=p_time}
 
 addNode :: Problem -> Int -> Int -> Int -> Int -> Problem
-addNode pb p_id b g s = pb{pb_nodes = (Node p_id b g s:pb_nodes pb)}
+addNode pb p_id b g s = pb{pb_nodes = (Map.insert p_id (Node p_id b g s) (pb_nodes pb) ) }
 
 addEdge :: Problem -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Problem
-addEdge pb p_id start end u c h t = pb{pb_edges = (Edge p_id start end u c h t:pb_edges pb)}
+addEdge pb p_id start end u c h t = pb{pb_edges = (Map.insert p_id (Edge p_id start end u c h t 0) (pb_edges pb) )}
