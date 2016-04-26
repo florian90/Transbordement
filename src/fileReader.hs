@@ -27,12 +27,6 @@ data Problem = Problem {
 } deriving (Show)
 -}
 
-main :: IO ()
-main = do
-    file <- openFile "../data/transshipment1.txt" ReadMode
-    pb <- initProblem file
-    putStrLn $ show $ pb
-
 getPb :: IO Problem
 getPb = do
     file <- openFile "../data/transshipment1.txt" ReadMode

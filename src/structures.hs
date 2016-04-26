@@ -49,19 +49,32 @@ data Problem = Problem {
     pb_path :: [Path]
 } deriving (Read)
 
+newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty 0 []
+
 instance Show Problem where
     show pb = pb_name pb ++ " : \n"
         ++ showMap (pb_nodes pb)
         ++ showMap (pb_edges pb)
-        ++ "path used :\t" ++ (show . pb_path) pb ++ "\n"
-        ++ (if Map.null $ pb_solution pb
+
+showEverything :: Problem -> String
+showEverything pb = pb_name pb ++ " : \n"
+    ++ showMap (pb_nodes pb)
+    ++ showMap (pb_edges pb)
+    ++ "path used :\t" ++ (show . pb_path) pb ++ "\n"
+    ++ (if Map.null $ pb_solution pb
             then ""
             else "Solution actuelle = " ++ show (Map.assocs (pb_solution pb)) ++ "\n")
-        ++ (if Map.null $ pb_bestSolution pb
+    ++ (if Map.null $ pb_bestSolution pb
             then ""
-            else "Meilleure solution = " ++ show (Map.assocs (pb_bestSolution pb)))
+            else "Meilleure solution (cout=" ++ (show . pb_bestSolutionCost) pb ++ ")= "
+                ++ show (Map.assocs (pb_bestSolution pb)))
 
-newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty 0 []
+showSolution :: Problem -> String
+showSolution pb = pb_name pb ++ " : \n"
+    ++ if Map.null $ pb_bestSolution pb
+            then "No best solution founds"
+            else "Meilleure solution (cout=" ++ (show . pb_bestSolutionCost) pb ++ ")= "
+                ++ show (Map.assocs (pb_bestSolution pb))
 
 showMap :: (Show v) => Map.Map k v -> String
 showMap m = concat . map (\x -> show x ++ "\n") $ Map.elems m
