@@ -2,8 +2,10 @@ module Structures where
 
 import qualified Data.Map as Map
 
+type ID = Int
+
 data Node = Node {
-    n_id    :: Int,
+    n_id    :: ID,
     n_b     :: Int, -- Demand of node : <0 for depots, >0 for clients, =0 for plaateforms
     n_g     :: Int, -- unitary cost
     n_s     :: Int  -- transhipment time
@@ -17,9 +19,9 @@ instance Show Node where
         ++ ", s:" ++ show s ++ "]"
 
 data Edge = Edge {
-    e_id    :: Int,
-    e_start :: Int,
-    e_end   :: Int,
+    e_id    :: ID,
+    e_start :: ID,
+    e_end   :: ID,
     e_u     :: Int, -- capacity
     e_c     :: Int, -- fixed cost
     e_h     :: Int, -- unitary cost
@@ -41,10 +43,10 @@ data Problem = Problem {
     pb_nbNode   :: Int,
     pb_nbEdge   :: Int,
     pb_maxTime  :: Int,
-    pb_nodes    :: Map.Map Int Node,
-    pb_edges    :: Map.Map Int Edge,
-    pb_solution :: Map.Map Int Int,
-    pb_bestSolution :: Map.Map Int Int,
+    pb_nodes    :: Map.Map ID Node,
+    pb_edges    :: Map.Map ID Edge,
+    pb_solution :: Map.Map ID Int,
+    pb_bestSolution :: Map.Map ID Int,
     pb_bestSolutionCost :: Int,
     pb_path :: [Path]
 } deriving (Read)
@@ -82,13 +84,13 @@ showMap m = concat . map (\x -> show x ++ "\n") $ Map.elems m
 {-
     Return the edge of intex idx of the problem
 -}
-getEdge :: Problem -> Int -> Edge
+getEdge :: Problem -> ID -> Edge
 getEdge Problem{pb_edges=edges} idx = edges Map.! idx
 
 {-
     Return the node of intex idx of the problem
 -}
-getNode :: Problem -> Int -> Node
+getNode :: Problem -> ID -> Node
 getNode Problem{pb_nodes=nodes} idx = nodes Map.! idx
 
-type Path = Maybe (Int, Int, Int)
+type Path = (ID, ID, Int)

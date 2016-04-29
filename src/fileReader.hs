@@ -30,15 +30,27 @@ data Problem = Problem {
 } deriving (Show)
 -}
 
-getPb :: IO Problem
-getPb = do
-    file <- openFile "../data/transshipment1.txt" ReadMode
+getPb :: String -> IO Problem
+getPb idx = do
+    file <- openFile ("../data/transshipment" ++ idx ++ ".txt") ReadMode
     pb <- initProblem file
     return pb
 
 getPb0 :: IO Problem
 getPb0 = do
     file <- openFile "../data/transshipment0.txt" ReadMode
+    pb <- initProblem file
+    return pb
+
+getPb1 :: IO Problem
+getPb1 = do
+    file <- openFile "../data/transshipment1.txt" ReadMode
+    pb <- initProblem file
+    return pb
+
+getPb2 :: IO Problem
+getPb2 = do
+    file <- openFile "../data/transshipment2.txt" ReadMode
     pb <- initProblem file
     return pb
 
