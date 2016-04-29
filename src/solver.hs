@@ -23,7 +23,7 @@ main = do
     putStrLn $ show $ pb
     putStrLn "Final solution : "
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution' pb (time + 20*60)
+    sol <- improveSolution' pb (time + 10*20*60)
     putStrLn $ showSolution $ sol
     return ()
 
@@ -116,12 +116,6 @@ addTransport pb idx nbr = pb{pb_solution = Map.insert idx nbr' (pb_solution pb),
                 changeCapacityNode :: Int -> Int -> Node
                 changeCapacityNode n_idx nbr = node{n_b=(n_b node) + nbr} where
                     node = getNode pb n_idx
-{-
-    #########################
-    Check if the actual (partial ??) solution can lead to a feasible solution
--}
-isSolutionRealisable :: Problem -> Bool
-isSolutionRealisable pb = True
 
 {-
     Check if the actual solution transport every element from the repository to the clients
@@ -146,7 +140,6 @@ isBestSolution :: Problem -> Bool
 isBestSolution pb =  pb_bestSolutionCost pb == 0 || coutSolution pb < pb_bestSolutionCost pb
 
 {-
-    #########################
     Compute the minimal bound of a solution
 -}
 
@@ -189,56 +182,34 @@ removePossiblility pb (a, b, c) = pb {pb_edges= Map.insert (e_id lower) (decreme
     Returned value : Just (id_edge 1, id_edge2, nbrProduct) | Nothing if there is no remaining path
 -}
 findPath :: Problem -> Maybe Path
-findPath pb = if null res then Nothing else res !! 0 where
+findPath pb = if null res then Nothing else Just(res!!0) where
     res = sortBy costOrder $ concat . map pathFrom $ Map.elems $ pb_nodes pb
-    pathFrom :: Node -> [Maybe Path]
+    pathFrom :: Node -> [Path]
     pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a node
         else concat . filter (/=[]) $ map pathWith $ Map.elems $ pb_edges pb where
-            pathWith :: Edge -> [Maybe Path]
+            pathWith :: Edge -> [Path]
             pathWith e = if n_id n == e_start e && e_a e <= e_u e -- start from n && can add product
-                then filter isJust $ map pathWith' $ Map.elems $ pb_edges pb
+                then map fromJust $ filter isJust $ map pathWith' $ Map.elems $ pb_edges pb
                 else []
                 where
                     pathWith' :: Edge -> Maybe Path
-                    pathWith' e2 = if e_end e == e_start e2 && e_a e2 <= e_u e2 && time <= pb_maxTime pb && nbr > 0
+                    pathWith' e2 = if e_end e == e_start e2 --conected path
+                                        && e_a e2 <= e_u e2 --not full
+                                        && time <= pb_maxTime pb --time is correc
+                                        && nbr > 0
                         then path
                         else Nothing
                         where
                             nbr = minimum [e_u e - e_a e, e_u e2 - e_a e2,-(n_b $ getNode pb (e_start e)), n_b $ getNode pb (e_end e2)]
                             time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
                             path = Just(e_id e, e_id e2, nbr)
-    costOrder :: Maybe Path -> Maybe Path -> Ordering
+    costOrder :: Path -> Path -> Ordering
     costOrder p1 p2 = compare (costPath p1) (costPath p2) where
-        costPath :: Maybe Path -> Int
-        costPath Nothing = 0
-        costPath (Just(e1, e2, nbr)) = (costEdge (getEdge pb e1) nbr) + (costEdge (getEdge pb e2) nbr) + n_g (getNode pb e1) where
+        costPath :: Path -> Int
+        costPath (e1, e2, nbr) = (costEdge (getEdge pb e1) nbr) + (costEdge (getEdge pb e2) nbr) + n_g (getNode pb e1) where
             costEdge :: Edge -> Int -> Int
             costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*nbr
 
-findPath' pb = concat . map pathFrom $ Map.elems $ pb_nodes pb where
-    pathFrom :: Node -> [Maybe Path] --Get every possible transport from a node -- if not a repository : nothing
-    pathFrom n = if n_b n >= 0 then [] -- if not a repository : nothing
-        else concat $ map pathWith $ Map.elems $ pb_edges pb where
-            pathWith :: Edge -> [Maybe Path]
-            pathWith e = if n_id n == e_start e && e_a e <= e_u e -- start from n && can add product
-                then filter isJust $ map pathWith' $ Map.elems $ pb_edges pb
-                else []
-                where
-                    pathWith' :: Edge -> Maybe Path
-                    pathWith' e2 = if True --e_end e == e_start e2 && e_a e2 <= e_u e2 && time <= pb_maxTime pb && nbr > 0
-                        then path
-                        else Nothing
-                        where
-                            nbr = minimum [e_u e - e_a e, e_u e2 - e_a e2,-(n_b $ getNode pb (e_start e)), n_b $ getNode pb (e_end e2)]
-                            time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
-                            path = Just(e_id e, e_id e2, nbr)
-    costOrder :: Maybe Path -> Maybe Path -> Ordering
-    costOrder p1 p2 = compare (costPath p1) (costPath p2) where
-        costPath :: Maybe Path -> Int
-        costPath Nothing = 0
-        costPath (Just(e1, e2, nbr)) = (costEdge (getEdge pb e1) nbr) + (costEdge (getEdge pb e2) nbr) + n_g (getNode pb e1) where
-            costEdge :: Edge -> Int -> Int
-            costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*nbr
 {-
     Return the remaining capacity of the edge of index `edgeIdx` in the Problem pb
 -}

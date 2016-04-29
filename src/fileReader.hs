@@ -4,12 +4,10 @@ import System.IO
 import Control.Monad
 
 import qualified Data.Map as Map
+
 import Data.Char
 import Data.List
-
 import Data.String
---import Data.Char
---import Data.String
 
 import Structures
 
