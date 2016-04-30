@@ -21,10 +21,13 @@ main = do
     pb <- getPb $ args!!0
     putStrLn "Initial Problem : "
     putStrLn $ show $ pb
-    putStrLn "Final solution : "
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution' pb (time + 10*20*60)
-    putStrLn $ showSolution $ sol
+    sol <- improveSolutionFast pb (time + 10*20*60)
+    putStrLn "First basic appoximation : "
+    putStrLn $ showSolution sol
+    sol2 <- improveSolution (copyBestSol pb sol) (time + 10*20*60)
+    putStrLn "Final solution : "
+    putStrLn $ showSolution sol2
     return ()
 
 {-
@@ -63,28 +66,78 @@ improveSolution pb i
             path = findPath pb :: Path
             newProblem = usePath pb path :: Problem
 -}
-improveSolution' :: Problem -> Time.DiffTime -> IO Problem
-improveSolution' pb endTime = do
+improveSolutionFast :: Problem -> Time.DiffTime -> IO Problem
+improveSolutionFast pb endTime = do
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
     if endTime < time
         then do
-            putStrLn "Temps écoulé"
             return pb
-        else if isSoltionOver pb
-            then if isBestSolution pb
-                then newBestSolution pb
-                else return pb
-            else if minBound pb > pb_bestSolutionCost pb && pb_bestSolutionCost pb > 0
-                then do
-                    putStr "."
-                    return pb
+        else if (not . isFeasible) pb
+            then return pb
+            else if isSoltionOver pb
+                then if isBestSolution pb
+                    then newBestSolution pb
+                    else do
+                        return pb
                 else do
-                    let path = findPath pb
-                    if isJust path
+                    if pb_bestSolutionCost pb > 0 && minBound pb >= pb_bestSolutionCost pb
                     then do
-                        newProblem <- improveSolution' (usePath pb $ fromJust path) endTime;
-                        improveSolution' (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
-                    else return pb
+                        return pb
+                    else do
+                        let path = findPath pb
+                        if isJust path
+                        then do
+                            newProblem <- improveSolutionFast (usePath pb $ fromJust path) endTime;
+                            improveSolutionFast (removePossiblilityFast (copyBestSol pb newProblem) $ fromJust path) endTime
+                        else do
+                            return pb
+
+improveSolution :: Problem -> Time.DiffTime -> IO Problem
+improveSolution pb endTime = do
+    time <- Time.getCurrentTime >>= return . Time.utctDayTime
+
+    --getChar
+    --putStrLn "########## PROBLEM #########"
+    --putStr $ show pb
+    --putStrLn "############################"
+
+    if endTime < time
+        then do
+            --putStr "Temps écoulé "
+            return pb
+        else if (not . isFeasible) pb
+            then return pb
+            else if isSoltionOver pb
+                then if isBestSolution pb
+                    then newBestSolution pb
+                    else do
+                        --putStrLn "Return "
+                        return pb
+                else do
+                    --putStrLn $ "minBound = "
+                    if pb_bestSolutionCost pb > 0 && minBound pb >= pb_bestSolutionCost pb
+                    then do
+                        --putStrLn $ "Cut " ++ show (pb_bestSolutionCost pb)
+                        return pb
+                    else do
+                        let path = findPath pb
+                        --putStrLn $ "Path : " ++ show path
+                        if isJust path
+                        then do
+                            --putStr "."
+                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime;
+                            improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
+                        else do
+                            --putStrLn "Nothing "
+                            return pb
+
+{-
+    Return True if we can find a solution to the given problem, Fasle otherwise
+-}
+isFeasible :: Problem -> Bool
+isFeasible pb = all id $ map canFill (Map.elems $ pb_nodes pb) where
+    canFill :: Node -> Bool
+    canFill n = (abs . n_b $ n) <= sum [e_u x - e_a x| x <- Map.elems $ pb_edges pb, (e_start x == n_id n || e_end x == n_id n)]
 
 {-
     Compute the cost of the pb_solution of a given problem
@@ -142,16 +195,17 @@ isBestSolution pb =  pb_bestSolutionCost pb == 0 || coutSolution pb < pb_bestSol
 {-
     Compute the minimal bound of a solution
 -}
-
 minBound :: Problem -> Int
 minBound pb = coutSolution pb + estimatedCost where
         estimatedCost = sum $ map nodeEstimation $ Map.elems $ pb_nodes pb where
             nodeEstimation :: Node -> Int
             nodeEstimation node = fillNode (abs $ n_b node) $ sortBy (\a b -> compare (cmup a) (cmup b)) edges where
                 cmup :: Edge -> Int
-                cmup edge = e_h edge * e_u edge + if isNothing $ (e_id edge) `Map.lookup` (pb_solution pb)
-                    then e_c edge   -- Si pas encore utilisé
-                    else 0          -- si déjà utilisé
+                cmup edge = (n_g $ getNode pb (e_start edge)) * (e_u edge - e_a edge)
+                    + e_h edge * (e_u edge - e_a edge)
+                    + if isNothing $ (e_id edge) `Map.lookup` (pb_solution pb)
+                        then e_c edge   -- Si pas encore utilisé
+                        else 0          -- si déjà utilisé
                 edges = if n_b node < 0 --Repository
                     then [x | x <- Map.elems $ pb_edges pb, e_start x == n_id node]
                     else if n_b node > 0 -- Client
@@ -161,21 +215,35 @@ minBound pb = coutSolution pb + estimatedCost where
                 fillNode nbr [] = 0
                 fillNode nbr (x:xs) = if nbr <= 0
                     then 0
-                    else (if e_a x==0 then e_c x else 0) + e_h x * nbr' + fillNode (nbr - nbr') xs where
-                        nbr' = min nbr (e_u x - e_a x)
+                    else (if e_a x==0 then e_c x else 0) --fixed cost
+                        + (n_g $ getNode pb (e_start x)) * nbr' --transportation platforms
+                        + e_h x * nbr' --fixed cost
+                        + fillNode (nbr - nbr') xs where -- Fill the rest of the quantity in de repository
+                            nbr' = min nbr (e_u x - e_a x)
 
 {-
     Reduce the number of possiblility of a problem
 -}
 removePossiblility :: Problem -> Path -> Problem
-removePossiblility pb (_, _, 0) = pb
 removePossiblility pb (a, b, c) = pb {pb_edges= Map.insert (e_id lower) (decrement lower) (pb_edges pb)}
     where
         ea = (pb_edges pb) Map.! a :: Edge
         eb = (pb_edges pb) Map.! b :: Edge
         lower = if pb `remainingCapacity` a <= pb `remainingCapacity` b then ea else eb :: Edge
         decrement :: Edge -> Edge
-        decrement e = e{e_u=(e_u e)-1} -- =0
+        decrement e = e{e_u=(e_u e)-1}
+
+{-
+    Remove the blocking edge from the problem
+-}
+removePossiblilityFast :: Problem -> Path -> Problem
+removePossiblilityFast pb (a, b, c) = pb {pb_edges= Map.insert (e_id lower) (decrement lower) (pb_edges pb)}
+    where
+        ea = (pb_edges pb) Map.! a :: Edge
+        eb = (pb_edges pb) Map.! b :: Edge
+        lower = if pb `remainingCapacity` a <= pb `remainingCapacity` b then ea else eb :: Edge
+        decrement :: Edge -> Edge
+        decrement e = e{e_u=0}
 
 {-
     Return the best possible path to use
