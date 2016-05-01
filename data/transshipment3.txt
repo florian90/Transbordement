@@ -1,0 +1,33 @@
+NAME : transshipment1
+NBR_NODES: 3
+NBR_EDGES: 2
+T: 15
+# NODE: i x_i y_i b_i g_i s_i
+# x_i, y_i : x, y of node i
+# b_i : demand of node_i, <0 for depot, >0 for client, =0 for platforms
+# g_i : cost for using node i, >0 only for platforms
+# s_i : time for crossing node _i, >0 only for platforms
+NODE:  1 10 20 -4 0 0
+NODE:  2 10 20 -7 0 0
+NODE:  3 50 20 0 14 5
+NODE:  4 50 20 0 10 5
+NODE:  5 100 150 3 0 0
+NODE:  6 100 150 4 0 0
+NODE:  7 100 150 4 0 0
+# EDGE: k i j u_ij c_ij h_ij t_ij
+# i : starting node of edge k
+# j : ending node of edge k
+# u_ij : capacity of edge (i,j)
+# c_ij : fixed cost for the use of (i,j)
+# h_ij : unit cost for (i,j)
+# t_ij : delivery time for (i,j)
+EDGE:  1 1 3 3 5 4 3
+EDGE:  2 1 4 2 9 3 3
+EDGE:  3 2 3 5 5 3 3
+EDGE:  4 2 4 4 7 6 3
+EDGE:  5 3 5 4 1 7 3
+EDGE:  6 3 6 5 9 5 3
+EDGE:  7 3 7 8 3 6 3
+EDGE:  8 4 5 2 4 4 3
+EDGE:  9 4 6 5 2 6 3
+EOF

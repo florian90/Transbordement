@@ -1,12 +1,12 @@
  /*
-	Problème de transport :
-	- Les quantités transportées doivent êtres conservées, produites ou consommées en chaque point
-	- Les capacités transportés doivent être inférieurs à la capacité maximale de l'arc
-	- Le temps de transport de chaque produit doit être inférieur au temps maximal T
-	-> Il faut minimiser la somme des couts unitaires + les couts fixes pour les arcs utilisés / transbordement
+	Problï¿½me de transport :
+	- Les quantitï¿½s transportï¿½es doivent ï¿½tres conservï¿½es, produites ou consommï¿½es en chaque point
+	- Les capacitï¿½s transportï¿½s doivent ï¿½tre infï¿½rieurs ï¿½ la capacitï¿½ maximale de l'arc
+	- Le temps de transport de chaque produit doit ï¿½tre infï¿½rieur au temps maximal T
+	-> Il faut minimiser la somme des couts unitaires + les couts fixes pour les arcs utilisï¿½s / transbordement
 */
 
-/* Paramètres */
+/* Paramï¿½tres */
 param nf;		/* Nombre de fournisseurs 				*/
 param np;		/* Nombre de plates formes 				*/
 param nc;		/* Nombre de clients 					*/
@@ -19,11 +19,11 @@ set U := F union P union C;		/* Total des noeuds 		*/
 param b{i in U} default 0; 			/* si >0 demande, si < 0 dispo du noeud 		*/
 
 param u{i in U, j in U}, default 0; 		/* Capa de l'arc 		*/
-param c{i in U, j in U}, default 0; 		/* Coût fixe de l'arc 		*/
-param h{i in U, j in U}, default 0; 		/* Coût variable de l'arc 					*/
+param c{i in U, j in U}, default 0; 		/* Coï¿½t fixe de l'arc 		*/
+param h{i in U, j in U}, default 0; 		/* Coï¿½t variable de l'arc 					*/
 param t{i in U, j in U}, default 0; 		/* Temps de transport 					*/
 
-param g{i in U}, default 0;			/* Coût unitaire de transbordement 			*/
+param g{i in U}, default 0;			/* Coï¿½t unitaire de transbordement 			*/
 param s{p in U}, default 0;			/* Temps de transbordement				*/
 
 param T;			/* Temps maximal du transport de chaque produit				*/
@@ -41,7 +41,7 @@ var y3{i in U, j in U, k in U}, binary;
 minimize z: sum{i in F, j in P} (x2[i, j] * h[i, j] + y2[i, j] * c[i, j] + x2[i, j] * g[j]) + sum{j in P, k in C} (x2[j, k] * h[j, k] + y2[j, k] * c[j, k] );
 
 /* Contraintes */
-s.t. C1{i in U, j in U}: 		x2[i, j] <= u[i, j]; 								/* utilisation <= capacité max 	*/
+s.t. C1{i in U, j in U}: 		x2[i, j] <= u[i, j]; 								/* utilisation <= capacitï¿½ max 	*/
 s.t. C2{i in U}: 			sum{j in U} (x2[i, j] - x2[j, i]) == -b[i]; 				/* pas de pertes 		*/
 s.t. C3{i in U, j in U}: 		inf * y2[i, j] >= x2[i, j];							/*  */
 s.t. C4{i in U, j in U, k in U}: 	inf * y3[i, j, k] >= x3[i, j, k];						/*  */
@@ -50,6 +50,6 @@ s.t. C7{i in U, j in U, k in U}: 	y3[i, j, k] * (t[i, j] + t[j, k]) + s[j] <= T;
 
 solve;
 
-display z, x3;
+display z, x2;
 
 end;

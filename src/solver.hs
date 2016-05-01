@@ -20,77 +20,12 @@ main = do
     args <- getArgs
     pb <- getPb $ args!!0
     putStrLn "Initial Problem : "
-    putStrLn $ show $ pb
+    putStrLn $ show pb
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolutionFast pb (time + 10*20*60)
-    putStrLn "First basic appoximation : "
-    putStrLn $ showSolution sol
-    sol2 <- improveSolution (copyBestSol pb sol) (time + 10*20*60)
+    sol <- improveSolution pb (time + 20*60)
     putStrLn "Final solution : "
-    putStrLn $ showSolution sol2
+    putStrLn $ showSolution sol
     return ()
-
-{-
-Branch and bound :
-    Si la solution est pas réalisable :
-        retour + enlever cette possibilité
-    Si la soltion est finie :
-        Si meilleur solution :
-                l'enregistrer
-            Sinon
-                retour
-        Sinon
-            retour
-    Trouver la borne min du début de solution :
-    Si borne min > solution déjà existante
-        retour + enlever cette possibilité
-    Sinon
-        Trouver le transport le moins chère possible
-        Si possible de faire un nouveau transport
-            le faire, recursion
-        Sinon
-            retour
--}
-{-
-improveSolution :: Problem -> Int -> Problem
-improveSolution pb i
-    | i <= 0 = pb
-    | isSoltionOver pb = if isBestSolution pb
-        then newBestSolution pb
-        else pb
-    | minBound pb > pb_bestSolutionCost pb && pb_bestSolutionCost pb > 0 = pb
-    | otherwise = if isJust path
-        then improveSolution (removePossiblility (copyThebest pb $ improveSolution newProblem (i)) path) (i-1)
-        else pb
-        where
-            path = findPath pb :: Path
-            newProblem = usePath pb path :: Problem
--}
-improveSolutionFast :: Problem -> Time.DiffTime -> IO Problem
-improveSolutionFast pb endTime = do
-    time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    if endTime < time
-        then do
-            return pb
-        else if (not . isFeasible) pb
-            then return pb
-            else if isSoltionOver pb
-                then if isBestSolution pb
-                    then newBestSolution pb
-                    else do
-                        return pb
-                else do
-                    if pb_bestSolutionCost pb > 0 && minBound pb >= pb_bestSolutionCost pb
-                    then do
-                        return pb
-                    else do
-                        let path = findPath pb
-                        if isJust path
-                        then do
-                            newProblem <- improveSolutionFast (usePath pb $ fromJust path) endTime;
-                            improveSolutionFast (removePossiblilityFast (copyBestSol pb newProblem) $ fromJust path) endTime
-                        else do
-                            return pb
 
 improveSolution :: Problem -> Time.DiffTime -> IO Problem
 improveSolution pb endTime = do
@@ -128,14 +63,14 @@ improveSolution pb endTime = do
                             newProblem <- improveSolution (usePath pb $ fromJust path) endTime;
                             improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
                         else do
-                            --putStrLn "Nothing "
                             return pb
 
 {-
-    Return True if we can find a solution to the given problem, Fasle otherwise
+    Return Fasle if one or more node can't be filled with the actual configuration,
+           True otherwise
 -}
 isFeasible :: Problem -> Bool
-isFeasible pb = all id $ map canFill (Map.elems $ pb_nodes pb) where
+isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb) where
     canFill :: Node -> Bool
     canFill n = (abs . n_b $ n) <= sum [e_u x - e_a x| x <- Map.elems $ pb_edges pb, (e_start x == n_id n || e_end x == n_id n)]
 

@@ -72,8 +72,7 @@ showEverything pb = pb_name pb ++ " : \n"
                 ++ show (Map.assocs (pb_bestSolution pb)))
 
 showSolution :: Problem -> String
-showSolution pb = pb_name pb ++ " : \n"
-    ++ if Map.null $ pb_bestSolution pb
+showSolution pb = if Map.null $ pb_bestSolution pb
             then "No best solution founds"
             else "Meilleure solution (cout=" ++ (show . pb_bestSolutionCost) pb ++ ")= "
                 ++ show (Map.assocs (pb_bestSolution pb))
