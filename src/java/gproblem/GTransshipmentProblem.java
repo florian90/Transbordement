@@ -25,6 +25,7 @@ import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
+import com.sun.javafx.geom.Edge;
 import gio.FichierEntree;
 import gio.FichierSortie;
 
@@ -325,9 +326,9 @@ public class GTransshipmentProblem {
 //		NBR_EDGES: 21
 //		T: 1000
 		fs.ecrire(TOKEN_NAME+" : "+this.instanceName+"\n") ;
-		fs.ecrire(TOKEN_NBR_NODES+" : "+this.getNbrNodes()+"\n") ;
-		fs.ecrire(TOKEN_NBR_EDGES+" : "+this.getNbrEdges()+"\n") ;
-		fs.ecrire(TOKEN_T+" : "+this.getT()+"\n") ;
+		fs.ecrire(TOKEN_NBR_NODES+": "+this.getNbrNodes()+"\n") ;
+		fs.ecrire(TOKEN_NBR_EDGES+": "+this.getNbrEdges()+"\n") ;
+		fs.ecrire(TOKEN_T+": "+this.getT()+"\n") ;
 
 		fs.ecrire("# NODE: i x_i y_i b_i g_i s_i\n") ;
 		fs.ecrire("# x_i, y_i : x, y of node i\n") ;
@@ -766,9 +767,9 @@ public class GTransshipmentProblem {
 	 * @param n the node to parse to a string
 	 * @return a string representing the node
 	 */
-	private String toStringForFile(Node n)
+	private String toStringForFile(GNode n)
 	{
-		str = new String("Node: ");
+		String str = new String("Node: ");
 		str += n.getIndice() + " ";
 		str += n.getX() + " " + n.getY() + " ";
 		str += n.getDemand() + " ";
@@ -783,14 +784,14 @@ public class GTransshipmentProblem {
 	 * @param e the edge to parse to a string
 	 * @return a string representing the edge
 	 */
-	private String toStringForFile(Edge e)
+	private String toStringForFile(GEdge e)
 	{
-		str = new String("Edge: ");
+		String str = new String("Edge: ");
 		str += e.getIndice() + " ";
 		str += e.getCapacity() + " ";
 		str += e.getFixedCost() + " ";
 		str += e.getUnitCost() + " ";
-		str += e.getTime;
+		str += e.getTime();
 		return str;
 	}
 
@@ -799,9 +800,9 @@ public class GTransshipmentProblem {
 	 * @param fileName the prefix of the file name
 	 */
 	public void saveTxt(String fileName) {
-		System.out.println("GTransshipmentProblem.saveTxt("+fileName+".rand.txt)") ;
-		FichierSortie fs = new FichierSortie (fileName+".rand.txt") ;
-		fs.ecrire("fileName" + "\n");
+		System.out.println("GTransshipmentProblem.saveTxt("+fileName+".txt)") ;
+		FichierSortie fs = new FichierSortie (fileName+".txt") ;
+		fs.ecrire(fileName + "\n");
 		fs.ecrire("NBR_NODES: " + tabNodes.length + "\n");
 		fs.ecrire("NBR_EDGES: " + tabEdges.length + "\n");
 		fs.ecrire("T: " + getT() + "\n");
@@ -811,7 +812,7 @@ public class GTransshipmentProblem {
 		fs.ecrire("# b_i : demand of node_i, <0 for depot, >0 for client, =0 for platforms\n");
 		fs.ecrire("# g_i : cost for using node i, >0 only for platforms\n");
 		fs.ecrire("# s_i : time for crossing node _i, >0 only for platforms\n");
-		for (Node n : tabNodes)
+		for (GNode n : tabNodes)
 			fs.ecrire(toStringForFile(n) + "\n");
 
 		fs.ecrire("# EDGE: k i j u_ij c_ij h_ij t_ij\n");
@@ -822,7 +823,7 @@ public class GTransshipmentProblem {
 		fs.ecrire("# h_ij : unit cost for (i,j)\n");
 		fs.ecrire("# t_ij : delivery time for (i,j)\n");
 
-		for (Edge e : tabEdges)
+		for (GEdge e : tabEdges)
 			fs.ecrire(toStringForFile(e) + "\n");
 
 		fs.ecrire("EOF\n") ;
