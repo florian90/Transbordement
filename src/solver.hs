@@ -22,9 +22,11 @@ main = do
     putStrLn "Initial Problem : "
     putStrLn $ show pb
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution pb (time + 20*60)
+    sol <- improveSolution pb (time + 2*3*20*60)
+    endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
     putStrLn "Final solution : "
-    putStrLn $ showSolution sol
+    putStrLn $ showResult $ copyBestSol pb sol
+    putStrLn $ "Within " ++ show (endTime - time)
     return ()
 
 improveSolution :: Problem -> Time.DiffTime -> IO Problem
@@ -49,7 +51,7 @@ improveSolution pb endTime = do
                         --putStrLn "Return "
                         return pb
                 else do
-                    --putStrLn $ "minBound = "
+                    --putStrLn $ "minBound = " ++ (show . minBound $ pb)
                     if pb_bestSolutionCost pb > 0 && minBound pb >= pb_bestSolutionCost pb
                     then do
                         --putStrLn $ "Cut " ++ show (pb_bestSolutionCost pb)
@@ -59,7 +61,7 @@ improveSolution pb endTime = do
                         --putStrLn $ "Path : " ++ show path
                         if isJust path
                         then do
-                            --putStr "."
+                            --putStrLn $ (show $ pb_remove pb) ++ " -> " ++ (show path)
                             newProblem <- improveSolution (usePath pb $ fromJust path) endTime;
                             improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
                         else do
@@ -77,12 +79,13 @@ isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb
 {-
     Compute the cost of the pb_solution of a given problem
 -}
-coutSolution :: Problem -> Int
+coutSolution :: Problem -> ValType
 coutSolution Problem {pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
     foldl (\acc x -> acc + coutElem x ) 0 $ Map.assocs sol where
+        coutElem :: (ID, Int) -> ValType
         coutElem (idEdge, nbrUtilisation)
             | nbrUtilisation == 0 = 0
-            | otherwise = (e_c edge) + ((n_g startingNode)+(e_h edge)) * nbrUtilisation
+            | otherwise = (e_c edge) + ((n_g startingNode) + (e_h edge)) * fromIntegral nbrUtilisation
                 where
                     edge = edges Map.! idEdge
                     startingNode = nodes Map.! (e_start edge)
@@ -130,14 +133,14 @@ isBestSolution pb =  pb_bestSolutionCost pb == 0 || coutSolution pb < pb_bestSol
 {-
     Compute the minimal bound of a solution
 -}
-minBound :: Problem -> Int
+minBound :: Problem -> ValType
 minBound pb = coutSolution pb + estimatedCost where
         estimatedCost = sum $ map nodeEstimation $ Map.elems $ pb_nodes pb where
-            nodeEstimation :: Node -> Int
+            nodeEstimation :: Node -> ValType
             nodeEstimation node = fillNode (abs $ n_b node) $ sortBy (\a b -> compare (cmup a) (cmup b)) edges where
-                cmup :: Edge -> Int
-                cmup edge = (n_g $ getNode pb (e_start edge)) * (e_u edge - e_a edge)
-                    + e_h edge * (e_u edge - e_a edge)
+                cmup :: Edge -> ValType
+                cmup edge = (n_g $ getNode pb (e_start edge)) * fromIntegral (e_u edge - e_a edge)
+                    + e_h edge * fromIntegral (e_u edge - e_a edge)
                     + if isNothing $ (e_id edge) `Map.lookup` (pb_solution pb)
                         then e_c edge   -- Si pas encore utilisé
                         else 0          -- si déjà utilisé
@@ -146,13 +149,13 @@ minBound pb = coutSolution pb + estimatedCost where
                     else if n_b node > 0 -- Client
                         then [x | x <- Map.elems $ pb_edges pb, e_end x == n_id node]
                         else [] -- finished / platform
-                fillNode :: Int -> [Edge] -> Int
+                fillNode :: Int -> [Edge] -> ValType
                 fillNode nbr [] = 0
                 fillNode nbr (x:xs) = if nbr <= 0
                     then 0
                     else (if e_a x==0 then e_c x else 0) --fixed cost
-                        + (n_g $ getNode pb (e_start x)) * nbr' --transportation platforms
-                        + e_h x * nbr' --fixed cost
+                        + (n_g $ getNode pb (e_start x)) * fromIntegral nbr' --transportation platforms
+                        + e_h x * fromIntegral nbr' --fixed cost
                         + fillNode (nbr - nbr') xs where -- Fill the rest of the quantity in de repository
                             nbr' = min nbr (e_u x - e_a x)
 
@@ -160,25 +163,7 @@ minBound pb = coutSolution pb + estimatedCost where
     Reduce the number of possiblility of a problem
 -}
 removePossiblility :: Problem -> Path -> Problem
-removePossiblility pb (a, b, c) = pb {pb_edges= Map.insert (e_id lower) (decrement lower) (pb_edges pb)}
-    where
-        ea = (pb_edges pb) Map.! a :: Edge
-        eb = (pb_edges pb) Map.! b :: Edge
-        lower = if pb `remainingCapacity` a <= pb `remainingCapacity` b then ea else eb :: Edge
-        decrement :: Edge -> Edge
-        decrement e = e{e_u=(e_u e)-1}
-
-{-
-    Remove the blocking edge from the problem
--}
-removePossiblilityFast :: Problem -> Path -> Problem
-removePossiblilityFast pb (a, b, c) = pb {pb_edges= Map.insert (e_id lower) (decrement lower) (pb_edges pb)}
-    where
-        ea = (pb_edges pb) Map.! a :: Edge
-        eb = (pb_edges pb) Map.! b :: Edge
-        lower = if pb `remainingCapacity` a <= pb `remainingCapacity` b then ea else eb :: Edge
-        decrement :: Edge -> Edge
-        decrement e = e{e_u=0}
+removePossiblility pb path = pb {pb_remove = path:(pb_remove pb)}
 
 {-
     Return the best possible path to use
@@ -188,30 +173,33 @@ findPath :: Problem -> Maybe Path
 findPath pb = if null res then Nothing else Just(res!!0) where
     res = sortBy costOrder $ concat . map pathFrom $ Map.elems $ pb_nodes pb
     pathFrom :: Node -> [Path]
-    pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a node
-        else concat . filter (/=[]) $ map pathWith $ Map.elems $ pb_edges pb where
+    pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a repository node
+        else concat . filter (/=[]) . map pathWith $ Map.elems $ pb_edges pb where
             pathWith :: Edge -> [Path]
-            pathWith e = if n_id n == e_start e && e_a e <= e_u e -- start from n && can add product
-                then map fromJust $ filter isJust $ map pathWith' $ Map.elems $ pb_edges pb
+            pathWith e = if n_id n == e_start e -- start from n
+                            && e_a e <= e_u e -- can add product
+                then filter (\a -> notElem a (pb_remove pb)) . map fromJust . filter isJust . map pathWith' $ Map.elems $ pb_edges pb
                 else []
                 where
                     pathWith' :: Edge -> Maybe Path
                     pathWith' e2 = if e_end e == e_start e2 --conected path
-                                        && e_a e2 <= e_u e2 --not full
-                                        && time <= pb_maxTime pb --time is correc
                                         && nbr > 0
+                                        && e_a e2 <= e_u e2 --not full
+                                        && time <= pb_maxTime pb --time is correct
                         then path
                         else Nothing
                         where
-                            nbr = minimum [e_u e - e_a e, e_u e2 - e_a e2,-(n_b $ getNode pb (e_start e)), n_b $ getNode pb (e_end e2)]
+                            nbr = minimum [e_u e-e_a e, e_u e2-e_a e2,-(n_b $ getNode pb $ e_start e), n_b $ getNode pb $ e_end e2] :: Int
                             time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
                             path = Just(e_id e, e_id e2, nbr)
     costOrder :: Path -> Path -> Ordering
     costOrder p1 p2 = compare (costPath p1) (costPath p2) where
-        costPath :: Path -> Int
-        costPath (e1, e2, nbr) = (costEdge (getEdge pb e1) nbr) + (costEdge (getEdge pb e2) nbr) + n_g (getNode pb e1) where
-            costEdge :: Edge -> Int -> Int
-            costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*nbr
+        costPath :: Path -> ValType
+        costPath (id_e1, id_e2, nbr) = (costEdge edge1 nbr) + (costEdge edge2 nbr) + n_g (getNode pb (e_end edge1)) where
+            edge1 = getEdge pb id_e1
+            edge2 = getEdge pb id_e2
+            costEdge :: Edge -> Int -> ValType
+            costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*fromIntegral nbr
 
 {-
     Return the remaining capacity of the edge of index `edgeIdx` in the Problem pb

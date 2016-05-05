@@ -4,12 +4,14 @@ import qualified Data.Map as Map
 
 type ID = Int
 
+type ValType = Float
+
 data Node = Node {
     n_id    :: ID,
     n_b     :: Int, -- Demand of node : <0 for depots, >0 for clients, =0 for plaateforms
-    n_g     :: Int, -- unitary cost
-    n_s     :: Int  -- transhipment time
-} deriving (Read)
+    n_g     :: ValType, -- unitary cost
+    n_s     :: ValType  -- transhipment time
+}
 
 instance Show Node where
     show Node{n_id=_id, n_b=b, n_g=g, n_s=s} =
@@ -23,11 +25,11 @@ data Edge = Edge {
     e_start :: ID,
     e_end   :: ID,
     e_u     :: Int, -- capacity
-    e_c     :: Int, -- fixed cost
-    e_h     :: Int, -- unitary cost
-    e_t     :: Int, -- delivring time
+    e_c     :: ValType, -- fixed cost
+    e_h     :: ValType, -- unitary cost
+    e_t     :: ValType, -- delivring time
     e_a     :: Int  -- actual used capacity
-} deriving (Read)
+}
 
 instance Show Edge where
     show Edge{e_id=_id, e_start=start, e_end=end, e_u=u, e_c=c, e_h=h, e_t=t, e_a=a} =
@@ -42,34 +44,40 @@ data Problem = Problem {
     pb_name     :: String,
     pb_nbNode   :: Int,
     pb_nbEdge   :: Int,
-    pb_maxTime  :: Int,
+    pb_maxTime  :: ValType,
     pb_nodes    :: Map.Map ID Node,
     pb_edges    :: Map.Map ID Edge,
     pb_solution :: Map.Map ID Int,
     pb_bestSolution :: Map.Map ID Int,
-    pb_bestSolutionCost :: Int,
-    pb_path :: [Path]
-} deriving (Read)
+    pb_bestSolutionCost :: ValType,
+    pb_path :: [Path],
+    pb_remove :: [Path]
+}
 
-newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty 0 []
+newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty 0 [] []
 
 instance Show Problem where
     show pb = pb_name pb ++ " : \n"
         ++ showMap (pb_nodes pb)
         ++ showMap (pb_edges pb)
 
-showEverything :: Problem -> String
-showEverything pb = pb_name pb ++ " : \n"
+showResult :: Problem -> String
+showResult pb = pb_name pb ++ " : \n"
     ++ showMap (pb_nodes pb)
-    ++ showMap (pb_edges pb)
-    ++ "path used :\t" ++ (show . pb_path) pb ++ "\n"
-    ++ (if Map.null $ pb_solution pb
-            then ""
-            else "Solution actuelle = " ++ show (Map.assocs (pb_solution pb)) ++ "\n")
+    ++ (foldl (\acc x -> acc ++ x) [] . map showEdgeUsage $ Map.elems $ pb_edges pb)
     ++ (if Map.null $ pb_bestSolution pb
             then ""
             else "Meilleure solution (cout=" ++ (show . pb_bestSolutionCost) pb ++ ")= "
                 ++ show (Map.assocs (pb_bestSolution pb)))
+        where
+            showEdgeUsage Edge{e_id=_id, e_start=start, e_end=end, e_u=u, e_c=c, e_h=h, e_t=t, e_a=a} =
+                "Edge_" ++ show _id ++ " =\t["
+                ++ "(" ++ show start ++ "->" ++ show end ++ ")"
+                ++ ", u:" ++ show (if _id `Map.member` (pb_bestSolution pb) then pb_bestSolution pb Map.! _id else 0) ++ "/" ++ show u
+                ++ ", c:" ++ show c
+                ++ ", h:" ++ show h
+                ++ ", t:" ++ show t ++ "]"
+                ++ "\n"
 
 showSolution :: Problem -> String
 showSolution pb = if Map.null $ pb_bestSolution pb

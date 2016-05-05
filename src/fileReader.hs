@@ -73,17 +73,17 @@ updateProblem str pb =
             else if "NBR_NODES" `isPrefixOf` str
                 then setNbNode pb $ getElem str 1
                 else if "NBR_EDGES" `isPrefixOf` str
-                    then setNbEdge pb (getElem str 1)
+                    then setNbEdge pb $ getElem str 1
                     else if "NODE" `isPrefixOf` str
                         then addNode pb ((getElem str 1)) (getElem str 4) (getElem str 5) (getElem str 6)
                         else if "EDGE" `isPrefixOf` str
                             then addEdge pb ((getElem str 1)) ((getElem str 2)) ((getElem str 3)) (getElem str 4) (getElem str 5) (getElem str 6) (getElem str 7)
                             else if "T" `isPrefixOf` str
-                                then setTime pb (getElem str 1)
-                                else pb
+                                then setTime pb (getElem  str 1)
+                                else error "Error during file reading"
 
-getElem :: String -> Int -> Int
-getElem str idx = read ((words str)!!idx) :: Int
+getElem :: (Read a) => String -> Int -> a
+getElem str idx = read ((words str)!!idx)
 
 setName :: Problem -> String -> Problem
 setName pb p_name = pb {pb_name=p_name}
@@ -94,11 +94,11 @@ setNbNode pb p_nbNode = pb {pb_nbNode=p_nbNode}
 setNbEdge :: Problem -> Int -> Problem
 setNbEdge pb p_nbEdge = pb {pb_nbEdge=p_nbEdge}
 
-setTime :: Problem -> Int -> Problem
+setTime :: Problem -> ValType -> Problem
 setTime pb p_time = pb {pb_maxTime=p_time}
 
-addNode :: Problem -> Int -> Int -> Int -> Int -> Problem
+addNode :: Problem -> Int -> Int -> ValType -> ValType -> Problem
 addNode pb p_id b g s = pb{pb_nodes = (Map.insert p_id (Node p_id b g s) (pb_nodes pb) ) }
 
-addEdge :: Problem -> Int -> Int -> Int -> Int -> Int -> Int -> Int -> Problem
+addEdge :: Problem -> Int -> Int -> Int -> Int -> ValType -> ValType -> ValType -> Problem
 addEdge pb p_id start end u c h t = pb{pb_edges = (Map.insert p_id (Edge p_id start end u c h t 0) (pb_edges pb) )}
