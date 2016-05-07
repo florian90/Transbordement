@@ -1,0 +1,46 @@
+#
+# Best solution=GTransshipmentSolution [evaluation=3102.338398857971,
+#                                       tabAssignment=[0, 1, 11, 1, 20, 2, 0, 31, 0] ]
+# D1-PF1 = 1
+# D1-PF2 = 11
+#
+# D2-PF1 = 1
+# D2-PF2 = 20
+#
+# PF1-C1 = 2
+# PF1-C2 = 0
+#
+# PF2-C1 = 31
+# PF2-C2 = 0
+#
+NAME : null
+NBR_NODES : 6
+NBR_EDGES : 8
+T : 143.7346995042513
+# NODE: i x_i y_i b_i g_i s_i
+# x_i, y_i : x, y of node i
+# b_i : demand of node_i, <0 for depot, >0 for client, =0 for platforms
+# g_i : cost for using node i, >0 only for platforms
+# s_i : time for crossing node _i, >0 only for platforms
+NODE: 1 10 10 -12 0.0 0.0
+NODE: 2 10 20 -21 0.0 0.0
+NODE: 3 50 10 0 72.81497785188415 1.0
+NODE: 4 50 20 0 64.4157333341782 1.0
+NODE: 5 100 10 8 0.0 0.0
+NODE: 6 100 20 25 0.0 0.0
+# EDGE: k i j u_ij c_ij h_ij t_ij
+# i : starting node of edge k
+# j : ending node of edge k
+# u_ij : capacity of edge (i,j)
+# c_ij : fixed cost for the use of (i,j)
+# h_ij : unit cost for (i,j)
+# t_ij : delivery time for (i,j)
+EDGE: 1 1 3 4500 90.69071417976693 11.40351358988223 1.0
+EDGE: 2 1 4 1000 79.53163774830087 7.283657242040798 1.0
+EDGE: 3 2 3 1300 39.91745790547982 7.844871392063031 1.0
+EDGE: 4 2 4 6000 53.0323717571001 6.557565419552075 1.0
+EDGE: 5 3 5 3000 78.0881098565841 6.2438408590517325 1.0
+EDGE: 6 3 6 1600 38.80227652249282 12.563455812232275 1.0
+EDGE: 7 4 5 7700 76.13389776739291 9.658674704081115 1.0
+EDGE: 8 4 6 1400 46.98721414743531 17.14035011755449 1.0
+EOF

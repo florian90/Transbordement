@@ -1,6 +1,6 @@
 NAME : transshipment1
-NBR_NODES: 3
-NBR_EDGES: 2
+NBR_NODES : 3
+NBR_EDGES : 2
 T: 1000
 # NODE: i x_i y_i b_i g_i s_i
 # x_i, y_i : x, y of node i
