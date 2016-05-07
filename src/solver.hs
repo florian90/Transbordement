@@ -12,8 +12,10 @@ import Data.Maybe
 import qualified Data.Map as Map
 import qualified Data.Time as Time
 
-import Structures
-import FileReader
+import Util
+import Node
+import Edge
+import Problem
 
 main :: IO ()
 main = do
@@ -25,7 +27,7 @@ main = do
     sol <- improveSolution pb (time + 2*3*20*60)
     endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
     putStrLn "Final solution : "
-    putStrLn $ showResult $ copyBestSol pb sol
+    putStrLn $ showResult sol
     putStrLn $ "Within " ++ show (endTime - time)
     return ()
 
@@ -40,10 +42,11 @@ improveSolution pb endTime = do
 
     if endTime < time
         then do
-            --putStr "Temps écoulé "
+            putStr "Temps écoulé "
             return pb
-        else if (not . isFeasible) pb
-            then return pb
+        else if not . isFeasible $ pb
+            then do
+                return pb
             else if isSoltionOver pb
                 then if isBestSolution pb
                     then newBestSolution pb
@@ -58,11 +61,10 @@ improveSolution pb endTime = do
                         return pb
                     else do
                         let path = findPath pb
-                        --putStrLn $ "Path : " ++ show path
+                        --putStrLn $ (show $ pb_remove pb) ++ " -> " ++ (show path)
                         if isJust path
                         then do
-                            --putStrLn $ (show $ pb_remove pb) ++ " -> " ++ (show path)
-                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime;
+                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime
                             improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
                         else do
                             return pb
@@ -74,7 +76,7 @@ improveSolution pb endTime = do
 isFeasible :: Problem -> Bool
 isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb) where
     canFill :: Node -> Bool
-    canFill n = (abs . n_b $ n) <= sum [e_u x - e_a x| x <- Map.elems $ pb_edges pb, (e_start x == n_id n || e_end x == n_id n)]
+    canFill n = (abs . n_b $ n) <= sum [e_r x| x <- Map.elems $ pb_edges pb, (e_start x == n_id n || e_end x == n_id n)]
 
 {-
     Compute the cost of the pb_solution of a given problem
@@ -121,7 +123,7 @@ isSoltionOver Problem {pb_maxTime=maxTime, pb_nodes=nodes, pb_edges=edges, pb_so
 newBestSolution :: Problem -> IO Problem
 newBestSolution pb = do
     let pb2 = pb {pb_bestSolution=pb_solution pb, pb_bestSolutionCost=coutSolution pb}
-    putStrLn $ showSolution pb2
+    putStrLn $ "New soltion : " ++ showSolution pb2
     return pb2
 
 {-
@@ -139,8 +141,8 @@ minBound pb = coutSolution pb + estimatedCost where
             nodeEstimation :: Node -> ValType
             nodeEstimation node = fillNode (abs $ n_b node) $ sortBy (\a b -> compare (cmup a) (cmup b)) edges where
                 cmup :: Edge -> ValType
-                cmup edge = (n_g $ getNode pb (e_start edge)) * fromIntegral (e_u edge - e_a edge)
-                    + e_h edge * fromIntegral (e_u edge - e_a edge)
+                cmup edge = (n_g $ getNode pb (e_start edge)) * fromIntegral (e_r edge)
+                    + e_h edge * fromIntegral (e_r edge)
                     + if isNothing $ (e_id edge) `Map.lookup` (pb_solution pb)
                         then e_c edge   -- Si pas encore utilisé
                         else 0          -- si déjà utilisé
@@ -157,7 +159,7 @@ minBound pb = coutSolution pb + estimatedCost where
                         + (n_g $ getNode pb (e_start x)) * fromIntegral nbr' --transportation platforms
                         + e_h x * fromIntegral nbr' --fixed cost
                         + fillNode (nbr - nbr') xs where -- Fill the rest of the quantity in de repository
-                            nbr' = min nbr (e_u x - e_a x)
+                            nbr' = min nbr (e_r x)
 
 {-
     Reduce the number of possiblility of a problem
@@ -189,7 +191,7 @@ findPath pb = if null res then Nothing else Just(res!!0) where
                         then path
                         else Nothing
                         where
-                            nbr = minimum [e_u e-e_a e, e_u e2-e_a e2,-(n_b $ getNode pb $ e_start e), n_b $ getNode pb $ e_end e2] :: Int
+                            nbr = minimum [e_r e, e_r e2,-(n_b $ getNode pb $ e_start e), n_b $ getNode pb $ e_end e2] :: Int
                             time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
                             path = Just(e_id e, e_id e2, nbr)
     costOrder :: Path -> Path -> Ordering
