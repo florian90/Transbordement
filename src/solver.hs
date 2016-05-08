@@ -24,15 +24,16 @@ main = do
     putStrLn "Initial Problem : "
     putStrLn $ show pb
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution pb (time + 2*3*20*60)
+    sol <- improveSolution pb (time + 20*60) 0
     endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
-    putStrLn "Final solution : "
-    putStrLn $ showResult sol
+    --putStrLn "Final solution : "
+    --putStrLn $ showSolution sol
+    putStrLn $ "Tab assignmenet : " ++ (show $ evaluate $ sol)
     putStrLn $ "Within " ++ show (endTime - time)
     return ()
 
-improveSolution :: Problem -> Time.DiffTime -> IO Problem
-improveSolution pb endTime = do
+improveSolution :: Problem -> Time.DiffTime -> Int -> IO Problem
+improveSolution pb endTime i = do
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
 
     --getChar
@@ -47,7 +48,7 @@ improveSolution pb endTime = do
         else if not . isFeasible $ pb
             then do
                 return pb
-            else if isSoltionOver pb
+            else if isSolutionOver pb
                 then if isBestSolution pb
                     then newBestSolution pb
                     else do
@@ -61,11 +62,11 @@ improveSolution pb endTime = do
                         return pb
                     else do
                         let path = findPath pb
-                        --putStrLn $ (show $ pb_remove pb) ++ " -> " ++ (show path)
+                        --putStrLn $ "(" ++ (show i) ++ ") " ++ (show path) ++ " -> " ++ (show $ pb_remove pb)
                         if isJust path
                         then do
-                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime
-                            improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
+                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime (i+1)
+                            improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime (i+1)
                         else do
                             return pb
 
@@ -113,9 +114,10 @@ addTransport pb idx nbr = pb{pb_solution = Map.insert idx nbr' (pb_solution pb),
 {-
     Check if the actual solution transport every element from the repository to the clients
 -}
-isSoltionOver :: Problem -> Bool
-isSoltionOver Problem {pb_maxTime=maxTime, pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
+isSolutionOver :: Problem -> Bool
+isSolutionOver Problem {pb_maxTime=maxTime, pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
     foldl (\acc x -> if n_b x == 0 then acc else False) True $ Map.elems nodes
+    -- If for every node the number of product is null : True, otherwise : False
 
 {-
     Save the actual solution as the best solution, compute the cost of the best solution
@@ -123,7 +125,7 @@ isSoltionOver Problem {pb_maxTime=maxTime, pb_nodes=nodes, pb_edges=edges, pb_so
 newBestSolution :: Problem -> IO Problem
 newBestSolution pb = do
     let pb2 = pb {pb_bestSolution=pb_solution pb, pb_bestSolutionCost=coutSolution pb}
-    putStrLn $ "New soltion : " ++ showSolution pb2
+    putStrLn $ "New solution : " ++ showSolution pb2
     return pb2
 
 {-
@@ -165,7 +167,12 @@ minBound pb = coutSolution pb + estimatedCost where
     Reduce the number of possiblility of a problem
 -}
 removePossiblility :: Problem -> Path -> Problem
-removePossiblility pb path = pb {pb_remove = path:(pb_remove pb)}
+removePossiblility pb path@(a, b, nbr) = pb {pb_remove = path:(pb_remove pb)}{-,pb_edges= Map.insert (e_id lower) (decrement lower) (pb_edges pb)} where
+    ea = (pb_edges pb) Map.! a :: Edge
+    eb = (pb_edges pb) Map.! b :: Edge
+    lower = if pb `remainingCapacity` a <= pb `remainingCapacity` b then ea else eb :: Edge
+    decrement :: Edge -> Edge
+    decrement e = e{e_u=0}-}
 
 {-
     Return the best possible path to use

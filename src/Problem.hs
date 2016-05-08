@@ -7,6 +7,7 @@ import Control.Monad
 import Data.Char
 import Data.List
 import Data.String
+import Data.Maybe
 
 import qualified Data.Map as Map
 
@@ -128,3 +129,6 @@ addNode pb node@Node{n_id=_id} = pb{pb_nodes = (Map.insert _id node (pb_nodes pb
 
 addEdge :: Problem -> Edge -> Problem
 addEdge pb edge@Edge{e_id=_id} = pb{pb_edges = Map.insert _id edge (pb_edges pb) }
+
+evaluate :: Problem -> [Int]
+evaluate pb = map (\x -> fromMaybe 0 $ Map.lookup x (pb_bestSolution pb)) [0..pb_nbEdge pb]
