@@ -29,7 +29,7 @@ data Problem = Problem {
     pb_remove :: [Path]
 }
 
-newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty 0 [] []
+newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty (-1) [] []
 
 instance Show Problem where
     show pb = pb_name pb ++ " : \n"

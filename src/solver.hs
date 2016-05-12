@@ -17,12 +17,6 @@ import Node
 import Edge
 import Problem
 
-{-
-    Pour tshp010-04.txt : best = 2114.328818
-                Trouvé : (cout=2413.9148)= [(1,8),(2,5),(4,10),(6,23),(11,8),(12,14),(13,8),(14,8),(15,8)]
-Problème avec minBound : Si on l'enlève, on trouve des meilleurs solutions que avec
--}
-
 main :: IO ()
 main = do
     args <- getArgs
@@ -47,7 +41,7 @@ improveSolution pb endTime i = do
     --putStr $ show pb
     --putStrLn "############################"
 
-    if endTime < time
+    if endTime < time -- || hasBestSolution pb
         then do
             putStr "Temps écoulé "
             return pb
@@ -139,7 +133,10 @@ newBestSolution pb = do
     Check if the actual solution is betten than the actual best solution
 -}
 isBestSolution :: Problem -> Bool
-isBestSolution pb =  pb_bestSolutionCost pb == 0 || coutSolution pb < pb_bestSolutionCost pb
+isBestSolution pb =  (not . hasBestSolution $ pb) || coutSolution pb < pb_bestSolutionCost pb
+
+hasBestSolution :: Problem -> Bool
+hasBestSolution pb = pb_bestSolutionCost pb /= -1
 
 {-
     Compute the minimal bound of a solution
@@ -187,27 +184,24 @@ removePossiblility pb path@(a, b, nbr) = pb {pb_remove = path:(pb_remove pb)}{-,
 -}
 findPath :: Problem -> Maybe Path
 findPath pb = if null res then Nothing else Just(res!!0) where
-    res = sortBy costOrder' $ concat . map pathFrom $ Map.elems $ pb_nodes pb
+    res = sortBy costOrder . concat . map pathFrom $ Map.elems $ pb_nodes pb
     pathFrom :: Node -> [Path]
     pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a repository node
-        else concat . filter (/=[]) . map pathWith $ Map.elems $ pb_edges pb where
+        else concat . map pathWith $ Map.elems $ pb_edges pb where
             pathWith :: Edge -> [Path]
             pathWith e = if n_id n == e_start e -- start from n
                             && e_a e <= e_u e -- can add product
-                then filter (\a -> notElem a (pb_remove pb)) . map fromJust . filter isJust . map pathWith' $ Map.elems $ pb_edges pb
+                then filter (`notElem` (pb_remove pb)) . catMaybes . map pathWith' $ Map.elems $ pb_edges pb
                 else []
                 where
                     pathWith' :: Edge -> Maybe Path
-                    pathWith' e2 = if e_end e == e_start e2 --conected path
-                                        && nbr > 0
-                                        && e_a e2 <= e_u e2 --not full
+                    pathWith' e2 = if e_end e == e_start e2      --conected path
+                                        && nbr > 0               --something to carry
                                         && time <= pb_maxTime pb --time is correct
-                        then path
-                        else Nothing
+                        then Just(e_id e, e_id e2, nbr) else Nothing
                         where
-                            nbr = minimum [e_r e, e_r e2,-(n_b $ getNode pb $ e_start e), n_b $ getNode pb $ e_end e2] :: Int
+                            nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
                             time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
-                            path = Just(e_id e, e_id e2, nbr)
     costOrder :: Path -> Path -> Ordering
     costOrder p1 p2 = compare (costPath p1) (costPath p2) where
         costPath :: Path -> ValType
