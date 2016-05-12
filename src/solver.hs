@@ -17,17 +17,23 @@ import Node
 import Edge
 import Problem
 
+{-
+    Pour tshp010-04.txt : best = 2114.328818
+                Trouvé : (cout=2413.9148)= [(1,8),(2,5),(4,10),(6,23),(11,8),(12,14),(13,8),(14,8),(15,8)]
+Problème avec minBound : Si on l'enlève, on trouve des meilleurs solutions que avec
+-}
+
 main :: IO ()
 main = do
     args <- getArgs
     pb <- getPb $ args!!0
     putStrLn "Initial Problem : "
-    putStrLn $ show pb
+    --putStrLn $ show pb
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
     sol <- improveSolution pb (time + 20*60) 0
     endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
     --putStrLn "Final solution : "
-    --putStrLn $ showSolution sol
+    --putStrLn $ showResult sol
     putStrLn $ "Tab assignmenet : " ++ (show $ evaluate $ sol)
     putStrLn $ "Within " ++ show (endTime - time)
     return ()
@@ -78,6 +84,7 @@ isFeasible :: Problem -> Bool
 isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb) where
     canFill :: Node -> Bool
     canFill n = (abs . n_b $ n) <= sum [e_r x| x <- Map.elems $ pb_edges pb, (e_start x == n_id n || e_end x == n_id n)]
+        -- map e_r . filter (\x -> e_start x == n_id n || e_end x == n_id n) . Map.elems . pb_nodes $ pb
 
 {-
     Compute the cost of the pb_solution of a given problem
@@ -180,7 +187,7 @@ removePossiblility pb path@(a, b, nbr) = pb {pb_remove = path:(pb_remove pb)}{-,
 -}
 findPath :: Problem -> Maybe Path
 findPath pb = if null res then Nothing else Just(res!!0) where
-    res = sortBy costOrder $ concat . map pathFrom $ Map.elems $ pb_nodes pb
+    res = sortBy costOrder' $ concat . map pathFrom $ Map.elems $ pb_nodes pb
     pathFrom :: Node -> [Path]
     pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a repository node
         else concat . filter (/=[]) . map pathWith $ Map.elems $ pb_edges pb where
@@ -209,6 +216,8 @@ findPath pb = if null res then Nothing else Just(res!!0) where
             edge2 = getEdge pb id_e2
             costEdge :: Edge -> Int -> ValType
             costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*fromIntegral nbr
+    costOrder' :: Path -> Path -> Ordering
+    costOrder' (i11, i21, n1) (i12, i22, n2) = compare n1 n2
 
 {-
     Return the remaining capacity of the edge of index `edgeIdx` in the Problem pb

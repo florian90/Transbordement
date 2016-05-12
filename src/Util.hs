@@ -1,7 +1,7 @@
 module Util where
 
 type ID = Int
-type ValType = Float
+type ValType = Double
 type Path = (ID, ID, Int)
 
 (#) :: (Read a) => String -> Int -> a
