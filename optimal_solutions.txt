@@ -1,0 +1,28 @@
+data/transshipment1.txt : 212.000000 OK
+data/transshipment2.txt : 240.000000 OK
+data/tshp006-01.txt : 3112.295233 OK
+data/tshp010-01.txt : 4756.506448 OK
+data/tshp010-02.txt : 2058.468365 OK
+data/tshp010-03.txt : 1951.831336 OK
+data/tshp010-04.txt : 2114.328818 OK
+data/tshp010-05.txt : 2866.751824 OK
+data/tshp020-01.txt : 4019.880317
+data/tshp020-02.txt : 4908.754316
+data/tshp020-03.txt : 5164.097126
+data/tshp020-04.txt : 3809.296516
+data/tshp020-05.txt : 10840.676444 OK
+data/tshp050-01.txt : 14991.765906
+data/tshp050-02.txt : 18793.515409
+data/tshp050-03.txt : 9678.905222
+data/tshp050-04.txt : 13154.330225
+data/tshp050-05.txt : 12703.758090
+data/tshp100-01.txt : 25936.78521473
+data/tshp100-02.txt : 30053.04603032
+data/tshp100-03.txt : 41521.82726974
+data/tshp100-04.txt : infeasible
+data/tshp100-05.txt : infeasible
+data/tshp500-01.txt : 171155.5258523
+data/tshp500-02.txt : 
+data/tshp500-03.txt : 
+data/tshp500-04.txt : 
+data/tshp500-05.txt : 
