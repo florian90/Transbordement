@@ -30,42 +30,60 @@ data Problem = Problem {
     pb_nbEdge   :: Int,
     pb_maxTime  :: ValType,
     pb_nodes    :: Map.Map ID Node,
-    pb_edges    :: Map.Map ID Edge,
+    pb_edges    :: Map.Map ID Edge
 }
 
-newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty (-1) [] []
+newProblem = Problem "" 0 0 0 Map.empty Map.empty
 
 instance Show Problem where
     show pb = pb_name pb ++ " : \n"
+        ++ "maxTime = " ++ (show . pb_maxTime $ pb)
         ++ showMap (pb_nodes pb)
         ++ showMap (pb_edges pb)
 
-showResult :: Problem -> String
-showResult pb = pb_name pb ++ " : \n"
-    ++ showMap (pb_nodes pb)
-    ++ (foldl (\acc x -> acc ++ x) [] . map showEdgeUsage $ Map.elems $ pb_edges pb)
-    ++ (if Map.null $ pb_bestSolution pb
-            then ""
-            else "Meilleure solution (cout=" ++ (show . pb_bestSolutionCost) pb ++ ")= "
-                ++ show (Map.assocs (pb_bestSolution pb)))
-        where
-            showEdgeUsage Edge{e_id=_id, e_start=start, e_end=end, e_u=u, e_c=c, e_h=h, e_t=t, e_a=a} =
-                "Edge_" ++ show _id ++ " =\t["
-                ++ "(" ++ show start ++ "->" ++ show end ++ ")"
-                ++ ", u:" ++ show (if _id `Map.member` (pb_bestSolution pb) then pb_bestSolution pb Map.! _id else 0) ++ "/" ++ show u
-                ++ ", c:" ++ show c
-                ++ ", h:" ++ show h
-                ++ ", t:" ++ show t ++ "]"
-                ++ "\n"
+data Solution = Solution {
+    sol_nbEdge  :: Int,             -- From pb_nbEdge
+    sol_nbNode  :: Int,             -- From pb_nbNode
+    sol_nodes   :: Map.Map ID Int,  -- The remaining capacity of the nodes
+    sol_edges   :: Map.Map ID Int,  -- <==> pb_solution
+    sol_remove  :: [Path],          -- The edges we can't use in the actual solution
 
-showSolution :: Problem -> String
-showSolution pb = if Map.null $ pb_bestSolution pb
-            then "No best solution founds"
-            else "Meilleure solution (cout=" ++ (show . pb_bestSolutionCost) pb ++ ")= "
-                ++ show (Map.assocs (pb_bestSolution pb))
+    sol_best    :: Map.Map ID Int,  -- The sol_edges of the best sol
+    sol_bestCost:: Maybe ValType    -- The cost of the best solution
+}
+
+instance Show Solution where
+    show sol = show . evaluate $ sol
+
+emptySolution Problem{pb_nbEdge=e, pb_nbNode=n} = Solution e n Map.empty Map.empty [] Map.empty Nothing
+
+-- showResult :: Problem -> String
+-- showResult pb = pb_name pb ++ " : \n"
+--     ++ showMap (pb_nodes pb)
+--     ++ (foldl (\acc x -> acc ++ x) [] . map showEdgeUsage $ Map.elems $ pb_edges pb)
+--     ++ (if Map.null $ sol_best pb
+--             then ""
+--             else "Meilleure solution (cout=" ++ (show . sol_bestCost) pb ++ ")= "
+--                 ++ show (Map.assocs (sol_best pb)))
+--         where
+--             showEdgeUsage Edge{e_id=_id, e_start=start, e_end=end, e_u=u, e_c=c, e_h=h, e_t=t, e_a=a} =
+--                 "Edge_" ++ show _id ++ " =\t["
+--                 ++ "(" ++ show start ++ "->" ++ show end ++ ")"
+--                 ++ ", u:" ++ show (if _id `Map.member` (sol_best pb) then sol_best pb Map.! _id else 0) ++ "/" ++ show u
+--                 ++ ", c:" ++ show c
+--                 ++ ", h:" ++ show h
+--                 ++ ", t:" ++ show t ++ "]"
+--                 ++ "\n"
+
+showSolution :: Solution -> String
+showSolution sol = if Map.null $ sol_best sol then "No best solution founds"
+    else "Meilleure solution (cout=" ++ (show . sol_bestCost) sol ++ ")= " ++ show (Map.assocs (sol_best sol))
 
 showMap :: (Show v) => Map.Map k v -> String
 showMap m = concat . map (\x -> show x ++ "\n") $ Map.elems m
+
+evaluate :: Solution -> [Int]
+evaluate sol = map (\x -> fromMaybe 0 $ Map.lookup x (sol_best sol)) [0..sol_nbEdge sol]
 
 {-
     Return the edge of intex idx of the problem
@@ -79,6 +97,7 @@ getEdge Problem{pb_edges=edges} idx = edges Map.! idx
 getNode :: Problem -> ID -> Node
 getNode Problem{pb_nodes=nodes} idx = nodes Map.! idx
 
+----------------------- Functions to get a problem from a file -----------------------
 
 getPb :: String -> IO Problem
 getPb name = do
@@ -111,6 +130,8 @@ updateProblem str pb =
                                 then setTime pb ( str#(-1))
                                 else error "Error during file reading"
 
+----------------------- Setters to initialize the problem -----------------------
+
 setName :: Problem -> String -> Problem
 setName pb p_name = pb {pb_name=p_name}
 
@@ -128,6 +149,3 @@ addNode pb node@Node{n_id=_id} = pb{pb_nodes = (Map.insert _id node (pb_nodes pb
 
 addEdge :: Problem -> Edge -> Problem
 addEdge pb edge@Edge{e_id=_id} = pb{pb_edges = Map.insert _id edge (pb_edges pb) }
-
-evaluate :: Problem -> [Int]
-evaluate pb = map (\x -> fromMaybe 0 $ Map.lookup x (pb_bestSolution pb)) [0..pb_nbEdge pb]
