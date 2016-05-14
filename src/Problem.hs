@@ -1,4 +1,13 @@
-module Problem where
+module Problem
+(
+    Problem(..),
+    getPb,
+    evaluate,
+    getNode,
+    getEdge,
+    showSolution
+
+)where
 
 import System.IO
 
@@ -22,11 +31,6 @@ data Problem = Problem {
     pb_maxTime  :: ValType,
     pb_nodes    :: Map.Map ID Node,
     pb_edges    :: Map.Map ID Edge,
-    pb_solution :: Map.Map ID Int,
-    pb_bestSolution :: Map.Map ID Int,
-    pb_bestSolutionCost :: ValType,
-    pb_path :: [Path],
-    pb_remove :: [Path]
 }
 
 newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty (-1) [] []
@@ -79,11 +83,6 @@ getNode Problem{pb_nodes=nodes} idx = nodes Map.! idx
 getPb :: String -> IO Problem
 getPb name = do
     file <- openFile ("../data/"++name) ReadMode
-    pb <- initProblem file
-    return pb
-
-initProblem :: Handle -> IO Problem
-initProblem file = do
     pb <- lineReader file newProblem
     return pb
 
