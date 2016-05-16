@@ -1,5 +1,8 @@
 module Util where
 
+class Indexed a where
+    idx :: (Indexed a) => a -> ID
+
 type ID = Int
 type ValType = Double
 type Path = (ID, ID, Int)

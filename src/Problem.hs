@@ -25,11 +25,10 @@ data Problem = Problem {
     pb_solution :: Map.Map ID Int,
     pb_bestSolution :: Map.Map ID Int,
     pb_bestSolutionCost :: ValType,
-    pb_path :: [Path],
     pb_remove :: [Path]
 }
 
-newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty (-1) [] []
+newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty (-1) []
 
 instance Show Problem where
     show pb = pb_name pb ++ " : \n"

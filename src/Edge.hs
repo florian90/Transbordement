@@ -16,6 +16,9 @@ data Edge = Edge {
     e_a     :: Int  -- actual usage
 }
 
+instance Indexed Edge where
+    idx = e_id
+
 {-
     Return the remaining capacity of the edge
 -}
