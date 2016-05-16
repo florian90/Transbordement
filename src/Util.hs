@@ -1,5 +1,7 @@
 module Util where
 
+import qualified Data.Map as Map
+
 type ID = Int
 type ValType = Double
 type Path = (ID, ID, Int)
@@ -29,3 +31,9 @@ class Indexable a where
 replace n newVal (x:xs)
     | n == 0 = newVal:xs
     | otherwise = x:replace (n-1) newVal xs
+
+showTab :: (Show a) => [a] -> String
+showTab l = concat . map (\x -> show x ++ "\n") $ l
+
+showMap :: (Show v) => Map.Map k v -> String
+showMap m = concat . map (\x -> show x ++ "\n") $ Map.elems m
