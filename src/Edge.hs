@@ -16,11 +16,16 @@ data Edge = Edge {
     e_a     :: Int  -- actual usage
 }
 
+emptyEdge = Edge 0 0 0 0 0 0 0 0
+
 {-
     Return the remaining capacity of the edge
 -}
 e_r :: Edge -> Int
 e_r Edge{e_u=u, e_a=a} = u - a
+
+instance Indexable Edge where
+    idx = e_id
 
 instance Show Edge where
     show Edge{e_id=_id, e_start=start, e_end=end, e_u=u, e_c=c, e_h=h, e_t=t, e_a=a} =

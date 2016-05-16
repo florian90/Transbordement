@@ -11,6 +11,11 @@ data Node = Node {
     n_s     :: ValType  -- transhipment time
 }
 
+emptyNode = Node 0 0 0 0
+
+instance Indexable Node where
+    idx = n_id
+
 instance Show Node where
     show Node{n_id=_id, n_b=b, n_g=g, n_s=s} =
         "Node_" ++ show _id ++ " =\t["
