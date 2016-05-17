@@ -52,26 +52,26 @@ improveSolution pb endTime i = do
                 then if isBestSolution pb
                     then newBestSolution pb
                     else do
-                        putStrLn $ (replicate i ' ') ++ "Return "
+                        -- putStrLn $ (replicate i ' ') ++ "Return "
                         return pb
                 else do
                     --putStrLn $ "minBound = " ++ (show . minBound $ pb)
                     if hasBestSolution pb && minBound pb >= getBestCost pb
                     then do
-                        putStrLn $ (replicate i ' ') ++ "Cut " ++ show (getBestCost pb)
+                        -- putStrLn $ (replicate i ' ') ++ "Cut " ++ show (getBestCost pb)
                         return pb
                     else do
                         let path = findPath pb
                         if isJust path
                         then do
                             --putStrLn $ (replicate i ' ') ++ findPath' pb
-                            putStrLn $ (replicate i ' ') ++ "(" ++ (show i) ++ ") " ++ (show path) ++ " -> " ++ (show $ pb_remove pb)
+                            -- putStrLn $ (replicate i ' ') ++ "(" ++ (show i) ++ ") " ++ (show path) ++ " -> " ++ (show $ pb_remove pb)
                             newProblem <- improveSolution (usePath pb $ fromJust path) endTime (i+1)
-                            putStrLn $ (replicate i ' ') ++ "(" ++ (show i) ++ ") "
+                            -- putStrLn $ (replicate i ' ') ++ "(" ++ (show i) ++ ") "
                             improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime (i+1)
                         else do
                             -- All possible path are in pb_remove
-                            putStrLn $ (replicate i ' ') ++ "No path"
+                            -- putStrLn $ (replicate i ' ') ++ "No path"
                             return pb
 
 {-
@@ -206,10 +206,16 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
                     pathWith' e2 = if e_end e == e_start e2      --conected path
                                         && nbr > 0               --something to carry
                                         && time <= pb_maxTime pb --time is correct
-                        then Just(idx e, idx e2, nbr) else Nothing
-                        where
-                            nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
-                            time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
+                        -- then Just(idx e, idx e2, nbr) else Nothing
+                        then if (idx e, idx e2, nbr) `notElem` (pb_remove pb)
+                            then Just(idx e, idx e2, nbr)
+                            else if nbr > 1
+                                then Just(idx e, idx e2, nbr-1)
+                                else Nothing
+                        else Nothing
+                            where
+                                nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
+                                time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
     costOrder :: Path -> Path -> Ordering
     costOrder p1 p2 = compare (costPath p1) (costPath p2) where
         costPath :: Path -> ValType
