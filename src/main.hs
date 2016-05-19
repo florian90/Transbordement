@@ -18,7 +18,7 @@ main = do
 argumentLineParser :: [String] -> IO ()
 argumentLineParser [] = return ()
 argumentLineParser (x:xs)
-    | x `elem` ["-s", "--solve"] = do
+    | x `elem` ["-s", "--solve"] && not (null xs) = do
         solveProblem (head xs)
         argumentLineParser (tail xs)
     | otherwise = printHelp
