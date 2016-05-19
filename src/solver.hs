@@ -24,7 +24,7 @@ main = do
     putStrLn "Initial Problem : "
     --putStrLn $ show pb
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution pb (time + 20*60) 0
+    sol <- improveSolution pb (time + 3*3*20*60) 0
     endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
     --putStrLn "Final solution : "
     --putStrLn $ showResult sol
@@ -41,7 +41,7 @@ improveSolution pb endTime i = do
     --putStr $ show pb
     --putStrLn "############################"
 
-    if endTime < time -- || hasBestSolution pb
+    if endTime < time
         then do
             putStr "Temps écoulé "
             return pb
@@ -55,7 +55,7 @@ improveSolution pb endTime i = do
                         -- putStrLn $ (replicate i ' ') ++ "Return "
                         return pb
                 else do
-                    --putStrLn $ "minBound = " ++ (show . minBound $ pb)
+                    -- putStrLn $ "minBound = " ++ (show . minBound $ pb)
                     if hasBestSolution pb && minBound pb >= getBestCost pb
                     then do
                         -- putStrLn $ (replicate i ' ') ++ "Cut " ++ show (getBestCost pb)
@@ -64,7 +64,7 @@ improveSolution pb endTime i = do
                         let path = findPath pb
                         if isJust path
                         then do
-                            --putStrLn $ (replicate i ' ') ++ findPath' pb
+                            -- putStrLn $ (replicate i ' ') ++ findPath' pb
                             -- putStrLn $ (replicate i ' ') ++ "(" ++ (show i) ++ ") " ++ (show path) ++ " -> " ++ (show $ pb_remove pb)
                             newProblem <- improveSolution (usePath pb $ fromJust path) endTime (i+1)
                             -- putStrLn $ (replicate i ' ') ++ "(" ++ (show i) ++ ") "
@@ -199,20 +199,15 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
             pathWith :: Edge -> [Path]
             pathWith e = if idx n == e_start e -- start from n
                             && e_a e <= e_u e -- can add product
-                then filter (`notElem` (pb_remove pb)) . catMaybes . map pathWith' $ Map.elems $ pb_edges pb
+                then concat . map pathWith' $ Map.elems $ pb_edges pb
                 else []
                 where
-                    pathWith' :: Edge -> Maybe Path
+                    pathWith' :: Edge -> [Path]
                     pathWith' e2 = if e_end e == e_start e2      --conected path
                                         && nbr > 0               --something to carry
                                         && time <= pb_maxTime pb --time is correct
-                        -- then Just(idx e, idx e2, nbr) else Nothing
-                        then if (idx e, idx e2, nbr) `notElem` (pb_remove pb)
-                            then Just(idx e, idx e2, nbr)
-                            else if nbr > 1
-                                then Just(idx e, idx e2, nbr-1)
-                                else Nothing
-                        else Nothing
+                        then [(idx e, idx e2, x) | x <- [1..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
+                        else []
                             where
                                 nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
                                 time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
@@ -226,25 +221,26 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
             costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*fromIntegral nbr
     quantityOrder :: Path -> Path -> Ordering
     quantityOrder (_, _, n1) (_, _, n2) = compare n2 n1
-    sortFunc = if hasBestSolution pb then costOrder else quantityOrder
+    sortFunc = costOrder --if hasBestSolution pb then costOrder else quantityOrder
 
 findPath' :: Problem -> String
 findPath' pb = show res where
-    res = concat . map pathFrom $ Map.elems $ pb_nodes pb
+    res = concat . map pathFrom . Map.elems $ pb_nodes pb
     pathFrom :: Node -> [Path]
     pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a repository node
-        else concat . map pathWith $ Map.elems $ pb_edges pb where
+        else concat . map pathWith . Map.elems $ pb_edges pb where
             pathWith :: Edge -> [Path]
             pathWith e = if idx n == e_start e -- start from n
                             && e_a e <= e_u e -- can add product
-                then filter (`notElem` (pb_remove pb)) . catMaybes . map pathWith' $ Map.elems $ pb_edges pb
+                then concat . map pathWith' . Map.elems $ pb_edges pb
                 else []
                 where
-                    pathWith' :: Edge -> Maybe Path
+                    pathWith' :: Edge -> [Path]
                     pathWith' e2 = if e_end e == e_start e2      --conected path
                                         && nbr > 0               --something to carry
                                         && time <= pb_maxTime pb --time is correct
-                        then Just(idx e, idx e2, nbr) else Nothing
+                        then [(idx e, idx e2, x) | x <- [1..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
+                        else []
                         where
                             nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
                             time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
