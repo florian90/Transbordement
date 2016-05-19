@@ -17,8 +17,7 @@ import Node
 import Edge
 import Problem
 
-main :: IO ()
-main = do
+main2 = do
     args <- getArgs
     pb <- getPb $ args!!0
     putStrLn "Initial Problem : "
@@ -77,7 +76,7 @@ improveSolution pb endTime i = do
 {-
     Return Fasle if one or more node can't be filled with the actual configuration,
            True otherwise
-    The problem could be unfeasible and still returns true, due to the path it can't use
+    The problem could be unfeasible and still returns true, due to the ignored paths
 -}
 isFeasible :: Problem -> Bool
 isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb) where
@@ -89,9 +88,9 @@ isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb
 -}
 costSolution :: Problem -> ValType
 costSolution Problem {pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
-    foldl (\acc x -> acc + coutElem x ) 0 $ Map.assocs sol where
-        coutElem :: (ID, Int) -> ValType
-        coutElem (idEdge, nbrUtilisation)
+    foldl (\acc x -> acc + elemCost x ) 0 $ Map.assocs sol where
+        elemCost :: (ID, Int) -> ValType
+        elemCost (idEdge, nbrUtilisation)
             | nbrUtilisation == 0 = 0
             | otherwise = (e_c edge) + ((n_g startingNode) + (e_h edge)) * fromIntegral nbrUtilisation
                         --Fixed cost + (transshhipment cost + unitary cost) * nbr of unity carried
@@ -182,9 +181,11 @@ minBound pb = costSolution pb + (sum . map nodeEstimation . Map.elems $ pb_nodes
 
 {-
     Reduce the number of possiblility of a problem
+      Remove a path from the possible path choice
 -}
 removePossiblility :: Problem -> Path -> Problem
-removePossiblility pb path = pb {pb_remove = path:(pb_remove pb)}
+removePossiblility pb path@(e1,e2, nbr) = pb {pb_remove = paths ++ (pb_remove pb)} where
+    paths = [(e1, e2, x) | x <- [1..nbr]]
 
 {-
     Return the best possible path to use
@@ -207,7 +208,7 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
                                         && nbr > 0               -- Something to carry
                                         && e_t e + e_t e2 + (n_s $ getNode pb (e_end e)) <= pb_maxTime pb
                                         -- Time is correct
-                        then [(idx e, idx e2, x) | x <- [1..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
+                        then [(idx e, idx e2, x) | x <- [nbr..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
                         else []
                             where
                                 nbr = minimum [e_r e, -- Remaining capacity of the 1st edge
