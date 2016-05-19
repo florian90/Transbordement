@@ -16,11 +16,15 @@ main = do
     return ()
 
 argumentLineParser :: [String] -> IO ()
-argumentLineParser [] = return ()
-argumentLineParser (x:xs)
+argumentLineParser [] = printHelp
+argumentLineParser l = argumentLineParser' l
+
+argumentLineParser' :: [String] -> IO ()
+argumentLineParser' [] = return ()
+argumentLineParser' (x:xs)
     | x `elem` ["-s", "--solve"] && not (null xs) = do
         solveProblem (head xs)
-        argumentLineParser (tail xs)
+        argumentLineParser' (tail xs)
     | otherwise = printHelp
 
 solveProblem :: String -> IO ()
