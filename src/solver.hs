@@ -87,8 +87,8 @@ isFeasible pb = foldl (\acc n -> acc && canFill n) True (Map.elems $ pb_nodes pb
 {-
     Compute the cost of the current solution of a given problem
 -}
-coutSolution :: Problem -> ValType
-coutSolution Problem {pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
+costSolution :: Problem -> ValType
+costSolution Problem {pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
     foldl (\acc x -> acc + coutElem x ) 0 $ Map.assocs sol where
         coutElem :: (ID, Int) -> ValType
         coutElem (idEdge, nbrUtilisation)
@@ -130,15 +130,15 @@ isSolutionOver Problem {pb_maxTime=maxTime, pb_nodes=nodes, pb_edges=edges, pb_s
 -}
 newBestSolution :: Problem -> IO Problem
 newBestSolution pb = do
-    let pb2 = pb {pb_bestSolution=pb_solution pb, pb_bestSolutionCost=Just(coutSolution pb)}
+    let pb2 = pb {pb_bestSolution=pb_solution pb, pb_bestSolutionCost=Just(costSolution pb)}
     putStrLn $ "New solution : " ++ showSolution pb2
     return pb2
 
 {-
-    Check if the actual solution is better than the actual best solution
+    Check if the actual solution is better than the best solution
 -}
 isBestSolution :: Problem -> Bool
-isBestSolution pb =  (not . hasBestSolution $ pb) || coutSolution pb < getBestCost pb
+isBestSolution pb =  (not . hasBestSolution $ pb) || costSolution pb < getBestCost pb
 
 {-
     Check if the problem already have a solution
@@ -156,7 +156,7 @@ getBestCost Problem{pb_bestSolutionCost=cost} = fromMaybe 0 cost
     Compute the minimal bound of a solution
 -}
 minBound :: Problem -> ValType
-minBound pb = coutSolution pb + (sum . map nodeEstimation . Map.elems $ pb_nodes pb) where
+minBound pb = costSolution pb + (sum . map nodeEstimation . Map.elems $ pb_nodes pb) where
     nodeEstimation :: Node -> ValType
     nodeEstimation node = fillNode (abs $ n_b node) $ sortBy (\a b -> compare (cmup a) (cmup b)) edges where
         cmup :: Edge -> ValType
@@ -203,15 +203,19 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
                 else []
                 where
                     pathWith' :: Edge -> [Path]
-                    pathWith' e2 = if e_end e == e_start e2      --conected path
-                                        && nbr > 0               --something to carry
-                                        && time <= pb_maxTime pb --time is correct
+                    pathWith' e2 = if e_end e == e_start e2      -- Conected path
+                                        && nbr > 0               -- Something to carry
+                                        && e_t e + e_t e2 + (n_s $ getNode pb (e_end e)) <= pb_maxTime pb
+                                        -- Time is correct
                         then [(idx e, idx e2, x) | x <- [1..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
                         else []
                             where
-                                nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
-                                time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
+                                nbr = minimum [e_r e, -- Remaining capacity of the 1st edge
+                                               e_r e2,-- Remaining capacity of the 2nd edge
+                                               negate.n_b.getNode pb .e_start $ e, -- Number of product in the repository
+                                               n_b.getNode pb.e_end $ e2] :: Int -- Number of product needed by the client
     costOrder :: Path -> Path -> Ordering
+    -- Compare path according to the price it would cost to carry the products
     costOrder p1 p2 = compare (costPath p1) (costPath p2) where
         costPath :: Path -> ValType
         costPath (id_e1, id_e2, nbr) = (costEdge edge1 nbr) + (costEdge edge2 nbr) + n_g (getNode pb (e_end edge1)) where
@@ -220,41 +224,9 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
             costEdge :: Edge -> Int -> ValType
             costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*fromIntegral nbr
     quantityOrder :: Path -> Path -> Ordering
+    -- Try to fill the demande of the clients as fast as possible
     quantityOrder (_, _, n1) (_, _, n2) = compare n2 n1
     sortFunc = costOrder --if hasBestSolution pb then costOrder else quantityOrder
-
-findPath' :: Problem -> String
-findPath' pb = show res where
-    res = concat . map pathFrom . Map.elems $ pb_nodes pb
-    pathFrom :: Node -> [Path]
-    pathFrom n = if n_b n >= 0 then [] --Get every possible transport from a repository node
-        else concat . map pathWith . Map.elems $ pb_edges pb where
-            pathWith :: Edge -> [Path]
-            pathWith e = if idx n == e_start e -- start from n
-                            && e_a e <= e_u e -- can add product
-                then concat . map pathWith' . Map.elems $ pb_edges pb
-                else []
-                where
-                    pathWith' :: Edge -> [Path]
-                    pathWith' e2 = if e_end e == e_start e2      --conected path
-                                        && nbr > 0               --something to carry
-                                        && time <= pb_maxTime pb --time is correct
-                        then [(idx e, idx e2, x) | x <- [1..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
-                        else []
-                        where
-                            nbr = minimum [e_r e, e_r e2, negate.n_b.getNode pb .e_start $ e, n_b.getNode pb.e_end $ e2] :: Int
-                            time = e_t e + e_t e2 + (n_s $ getNode pb (e_end e))
-    costOrder :: Path -> Path -> Ordering
-    costOrder p1 p2 = compare (costPath p1) (costPath p2) where
-        costPath :: Path -> ValType
-        costPath (id_e1, id_e2, nbr) = (costEdge edge1 nbr) + (costEdge edge2 nbr) + n_g (getNode pb (e_end edge1)) where
-            edge1 = getEdge pb id_e1
-            edge2 = getEdge pb id_e2
-            costEdge :: Edge -> Int -> ValType
-            costEdge Edge{e_c=c, e_h=h, e_a=a} nbr = (if a == 0 then c else 0) + h*fromIntegral nbr
-    quantityOrder :: Path -> Path -> Ordering
-    quantityOrder (_, _, n1) (_, _, n2) = compare n2 n1
-    sortFunc = if hasBestSolution pb then costOrder else quantityOrder
 
 {-
     Return the remaining capacity of the edge of index `edgeIdx` in the Problem pb
@@ -268,7 +240,7 @@ remainingCapacity pb edgeIdx = if isNothing mb_usage
         mb_usage = edgeIdx `Map.lookup` (pb_solution pb) :: Maybe Int
 
 {-
-    add a path to solutions
+    Add a path to the problem, use the path to transfert ressources
 -}
 usePath :: Problem -> Path -> Problem
 usePath pb (a, b, c) = (addTransport (addTransport pb b c) a c)
