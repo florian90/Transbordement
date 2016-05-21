@@ -54,6 +54,12 @@ improveSolution pb endTime i = do
                         -- putStrLn $ (replicate i ' ') ++ "Return "
                         return pb
                 else do
+                    if minBound pb < 5164.097126
+                        then do
+                            putStrLn "INFERIEUR"
+                            error "INFERIEUR"
+                        else
+                            putStr ""
                     -- putStrLn $ "minBound = " ++ (show . minBound $ pb)
                     if hasBestSolution pb && minBound pb >= getBestCost pb
                     then do
