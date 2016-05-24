@@ -4,7 +4,6 @@ import Data.List
 
 import System.Environment
 
-import qualified Data.Time as Time
 
 import Problem
 import Solver
@@ -17,40 +16,30 @@ main = do
 
 argumentLineParser :: [String] -> IO ()
 argumentLineParser [] = printHelp
-argumentLineParser l = argumentLineParser' l
+argumentLineParser l = argumentLineParser' l where
+    argumentLineParser' :: [String] -> IO ()
+    argumentLineParser' [] = return ()
+    argumentLineParser' (x:xs)
+        | x `elem` ["-s", "--solve"] && not (null xs) = do
+            solveProblem (head xs)
+            argumentLineParser' (tail xs)
+        | otherwise = printHelp
 
-argumentLineParser' :: [String] -> IO ()
-argumentLineParser' [] = return ()
-argumentLineParser' (x:xs)
-    | x `elem` ["-s", "--solve"] && not (null xs) = do
-        solveProblem (head xs)
-        argumentLineParser' (tail xs)
-    | otherwise = printHelp
-
+{-
+    Solve the problem contained in the file given in parameter
+    Show the evaluation of the solution and the time taken to solve it
+-}
 solveProblem :: String -> IO ()
 solveProblem fileName = do
     putStrLn ""
     putStrLn $ "Reading the file " ++ fileName ++ "..."
     pb <- getPb fileName
-    putStrLn $ "Solving the problem named: " ++ pb_name pb
-    time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution pb (time + getSolvingTime pb) 0
-    endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
-    putStrLn $ "Tab assignmenet : " ++ (show $ evaluate $ sol)
-    putStrLn $ "Within " ++ show (endTime - time)
-    putStrLn ""
+    solve pb
     return ()
 
 {-
-    Get the time to solve the problem
-        Depend of the size (number of nodes) of the problem
+    Show how to use the program
 -}
-getSolvingTime :: Problem -> Time.DiffTime
-getSolvingTime pb
-    | pb_nbNode pb <= 10 = 10
-    | pb_nbNode pb <= 20 = 30
-    | otherwise          = 60
-
 printHelp = do
     putStrLn ""
     putStrLn "Usage of the programm : ./pgname [options]"
