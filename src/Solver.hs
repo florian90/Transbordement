@@ -17,22 +17,13 @@ import Node
 import Edge
 import Problem
 
-solve :: Problem -> IO ()
-solve pb = do
-    putStrLn $ "Solving the problem named: " ++ pb_name pb
-    time <- Time.getCurrentTime >>= return . Time.utctDayTime
-    sol <- improveSolution pb (time + getSolvingTime pb)
-    endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
-    putStrLn $ "Tab assignmenet : " ++ (show $ evaluate $ sol)
-    putStrLn $ "Within " ++ show (endTime - time)
-    putStrLn ""
+solve = improveSolution
 
-
-improveSolution :: Problem -> Time.DiffTime -> IO Problem
-improveSolution pb endTime = do
+improveSolution :: Problem -> Time.DiffTime -> Int -> IO Problem
+improveSolution pb endTime i = do
     time <- Time.getCurrentTime >>= return . Time.utctDayTime
     if endTime < time
-        then
+        then do
             -- Time is over
             return pb
         else if not . isFeasible $ pb
@@ -44,7 +35,8 @@ improveSolution pb endTime = do
                 -- If it's better than the actual best solution, save it, otherwise return the old problem
                 then if isBestSolution pb
                     then newBestSolution pb
-                    else return pb
+                    else do
+                        return pb
                 else if hasBestSolution pb && minBound pb >= getBestCost pb
                     then
                         -- if the minimal bound is greater than the cost of the best solution -> cut,
@@ -54,9 +46,9 @@ improveSolution pb endTime = do
                         let path = findPath pb
                         if isJust path
                         then do
-                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime
-                            improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime
-                        else
+                            newProblem <- improveSolution (usePath pb $ fromJust path) endTime (i+1)
+                            improveSolution (removePossiblility (copyBestSol pb newProblem) $ fromJust path) endTime (i+1)
+                        else do
                             -- All path are avoided
                             return pb
 
@@ -79,14 +71,13 @@ minBound :: Problem -> ValType
 minBound pb = costSolution pb + (sum . map nodeEstimation . Map.elems $ pb_nodes pb) where
     nodeEstimation :: Node -> ValType
     nodeEstimation node = fillNode (abs $ n_b node) $ sortBy (\a b -> compare (cmup a) (cmup b)) edges where
-                        -- Compute the minimal cost that it would cost to carry
-                        --   every ressource from a repository to a client
-
+        -- Compute the minimal cost to carry every ressource from a repository to a client
         cmup :: Edge -> ValType
         -- The cost if we carry the maximum number of ressources in an edge
         --        = (transhipment + unitary cost ) * number of product
         --           + fixed cost if the edge is not used
-        cmup edge = ((n_g $ getNode pb (e_start edge)) + e_h edge) * fromIntegral (e_r edge)
+        cmup edge = (n_g $ getNode pb (e_start edge)) * fromIntegral (e_r edge)
+            + e_h edge * fromIntegral (e_r edge)
             + if isNothing $ (idx edge) `Map.lookup` (pb_solution pb)
                 then e_c edge   -- Not yet used -> Add the fixed cost
                 else 0          -- Already used -> Already in the costSolution
@@ -126,7 +117,8 @@ minBound pb = costSolution pb + (sum . map nodeEstimation . Map.elems $ pb_nodes
       Remove a path from the possible path choice
 -}
 removePossiblility :: Problem -> Path -> Problem
-removePossiblility pb path@(e1, e2, nbr) = pb {pb_remove = path:(pb_remove pb)}
+removePossiblility pb path@(e1,e2, nbr) = pb {pb_remove = paths ++ (pb_remove pb)} where
+    paths = [(e1, e2, x) | x <- [1..nbr]]
 
 {-
     Return the best possible path to use
@@ -141,17 +133,23 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
             pathWith :: Edge -> [Path]
             pathWith e = if idx n == e_start e -- start from n
                             && e_a e <= e_u e -- can add product
-                then concat . map pathWith' $ Map.elems $ pb_edges pb
+                then catMaybes . map pathWith' $ Map.elems $ pb_edges pb
                 else []
                 where
-                    pathWith' :: Edge -> [Path]
-                    pathWith' e2 = if e_end e == e_start e2      -- Conected path
-                                        && nbr > 0               -- Something to carry
-                                        && e_t e + e_t e2 + (n_s $ getNode pb (e_end e)) <= pb_maxTime pb
+                    pathWith' :: Edge -> Maybe Path
+                    pathWith' e2 = if e_end e == e_start e2 -- Conected path
+
+                                        && nbr > 0 -- Something to carry
+
                                         -- Time is correct
-                        then [(idx e, idx e2, x) | x <- [nbr..nbr], (idx e, idx e2, x) `notElem` (pb_remove pb) ]
-                        else []
+                                        && e_t e + e_t e2 + (n_s $ getNode pb (e_end e)) <= pb_maxTime pb
+
+                                        -- not in the path to avoid
+                                        && path `notElem` (pb_remove pb)
+                        then Just path
+                        else Nothing
                             where
+                                path = (idx e, idx e2, nbr)
                                 nbr = minimum [e_r e, -- Remaining capacity of the 1st edge
                                                e_r e2,-- Remaining capacity of the 2nd edge
                                                negate.n_b.getNode pb .e_start $ e, -- Number of product in the repository
@@ -169,22 +167,10 @@ findPath pb = if null res then Nothing else Just(minimumBy sortFunc res) where
 
     -- Compare path according to the number of product ot could carry (the most is the best)
     quantityOrder :: Path -> Path -> Ordering
+    -- Try to fill the demande of the clients as fast as possible
     quantityOrder (_, _, n1) (_, _, n2) = compare n2 n1
 
     -- If there is an intial solution
     -- then : Sort according to the costOrder to improve the solution
     -- else : Sort according to the quantityOrder to find a solution faster (and thus cut more solutions)
     sortFunc = costOrder --if hasBestSolution pb then costOrder else quantityOrder
-
-
-
-
-{-
-Get the time to solve the problem
-    Depend of the size (number of nodes) of the problem
--}
-getSolvingTime :: Problem -> Time.DiffTime
-getSolvingTime pb
-    | pb_nbNode pb <= 10 = 10
-    | pb_nbNode pb <= 20 = 30
-    | otherwise          = 60

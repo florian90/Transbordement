@@ -17,11 +17,7 @@ module Problem (
 
 import System.IO
 
-import Control.Monad
-
-import Data.Char
 import Data.List
-import Data.String
 import Data.Maybe
 
 import qualified Data.Map as Map
@@ -62,7 +58,8 @@ data Problem = Problem {
 -}
 newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty Nothing []
 
-{-instance Show Problem where
+{-
+instance Show Problem where
     show pb = pb_name pb ++ " : \n"
         ++ showMap (pb_nodes pb)
         ++ showMap (pb_edges pb)
@@ -86,7 +83,8 @@ showResult pb = pb_name pb ++ " : \n"
                 ++ ", c:" ++ show c
                 ++ ", h:" ++ show h
                 ++ ", t:" ++ show t ++ "]"
-                ++ "\n"-}
+                ++ "\n"
+-}
 
 showCost :: Problem -> String
 showCost pb = if hasBestSolution pb
@@ -100,9 +98,6 @@ showCost pb = if hasBestSolution pb
 -}
 evaluate :: Problem -> [Int]
 evaluate pb = map (\x -> fromMaybe 0 $ Map.lookup x (pb_bestSolution pb)) [0..pb_nbEdge pb]
-
-
-
 
 {-
     Return the list of problem's edges
@@ -129,25 +124,13 @@ getNode :: Problem -> ID -> Node
 getNode Problem{pb_nodes=nodes} idx = nodes Map.! idx
 
 {-
-    Return the remaining capacity of the edge of index `edgeIdx` in the Problem pb
--}
-remainingCapacity :: Problem -> Int -> Int
-remainingCapacity pb edgeIdx = if isNothing mb_usage
-    then capacity
-    else capacity - fromJust mb_usage
-    where
-        capacity = e_u $ (pb_edges pb) Map.! edgeIdx :: Int
-        mb_usage = edgeIdx `Map.lookup` (pb_solution pb) :: Maybe Int
-
-{-
     Return the cost of the bes solution found, 0 if there is none
 -}
 getBestCost :: Problem -> ValType
 getBestCost Problem{pb_bestSolutionCost=cost} = fromMaybe 0 cost
 
-
 {-
-Check if the problem already have a solution
+    Check if the problem already have a solution
 -}
 hasBestSolution :: Problem -> Bool
 hasBestSolution Problem{pb_bestSolutionCost=cost} = isJust cost
@@ -197,8 +180,9 @@ newBestSolution pb = do
 usePath :: Problem -> Path -> Problem
 usePath pb (a, b, c) = (addTransport (addTransport pb b c) a c)
 
+
 {-
-    Add `nbr` elements on the edge of index `idx`
+    add `nbr` elements on the edge of index `idx`
 -}
 addTransport :: Problem -> Int -> Int -> Problem
 addTransport pb idx nbr = pb{pb_solution = Map.insert idx nbr' (pb_solution pb),
@@ -214,25 +198,12 @@ addTransport pb idx nbr = pb{pb_solution = Map.insert idx nbr' (pb_solution pb),
                 changeCapacityNode :: Int -> Int -> Node
                 changeCapacityNode n_idx nbr = node{n_b=(n_b node) + nbr} where
                     node = getNode pb n_idx
-addTransport' pb idx nbr = pb{
-    pb_solution = Map.insertWith (+) idx nbr (pb_solution pb),
-    pb_edges = Map.insert idx (useEdge edge nbr) (pb_edges pb),
-    pb_nodes = move (pb_nodes pb) (e_start edge) (e_end edge) nbr}
-        where
-            edge = (pb_edges pb) Map.! idx
-            useEdge :: Edge -> Int -> Edge
-            useEdge edge nbr = edge{e_a = (e_a edge) + nbr}
-            move :: Map.Map Int Node -> Int -> Int -> Int -> Map.Map Int Node
-            move map_edges from to nbr = Map.insert from (changeCapacityNode from nbr) (Map.insert to (changeCapacityNode to (-nbr)) map_edges) where
-            changeCapacityNode :: Int -> Int -> Node
-            changeCapacityNode n_idx nbr = node{n_b=(n_b node) + nbr} where
-                node = getNode pb n_idx
 
 {-
     Copy the best solution of the 2nd problem into the 1st one
 -}
 copyBestSol :: Problem -> Problem -> Problem
-copyBestSol pb Problem{pb_bestSolution=best, pb_bestSolutionCost=cost} = pb{pb_bestSolution=best, pb_bestSolutionCost=cost}
+copyBestSol pb Problem {pb_bestSolution=best, pb_bestSolutionCost=cost} = pb{pb_bestSolution=best, pb_bestSolutionCost=cost}
 
 {-
     Returns a IO Problem build according to a file
@@ -240,8 +211,9 @@ copyBestSol pb Problem{pb_bestSolution=best, pb_bestSolutionCost=cost} = pb{pb_b
     Param name : the name of the file
 -}
 getPb :: String -> IO Problem
-getPb name = do
-    file <- openFile ("../data/"++name) ReadMode
+getPb fileName = do
+    putStrLn $ "Reading the file " ++ fileName ++ "..."
+    file <- openFile ("../data/"++fileName) ReadMode
     lineReader file newProblem
 
 {-
