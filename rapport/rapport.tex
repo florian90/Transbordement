@@ -31,7 +31,7 @@ L'objectif de ce projet est de résoudre un problème d'optimisation exacte,
 dérivé d'un problème de transport. 
 \section{Problème}
 En plus de devoir transiter d'un fournisseur à un client, 
-les ressources doivent passer par une plateforme de transbrdement.
+les ressources doivent passer par une plateforme de transbordement.
 
 \paragraph{Chaque arc possède : }
 \begin{itemize}
@@ -52,7 +52,7 @@ en plus du coût unitaire multiplié par le nombre de produits transportés.
 Pour chaque produit transitant par une plateforme, un coût unitaire de transbordement sera ajouté au coût total.\\
 
 Nous avons aussi d'autres contraintes que dans le problème initial.\\
-Tout d'abbord, les arc ont tous une capacité maximale, ce qui signifique 
+Tout d'abord, les arc ont tous une capacité maximale, ce qui signifie que 
 qu'il ne peut transiter plus de produit que la capacité maximale. 
 Les arc sont utilisés au maximum une fois, ils ne peut pas y avoir des aller-retour 
 pour transporter plus de ressources.\\
@@ -63,10 +63,10 @@ les temps de transport plus le temps de transbordement doivent être inférieurs
 
 \chapter{Modèle mathématique}
 \section{Paramètres}
-$n$ : nombre total de noeuds\\
-$n_f$ : nombre de noeuds fournisseurs\\
-$n_p$ : nombre de noeuds plates-formes\\
-$n_c$ : nombre de noeuds clients \newline
+$n$ : nombre total de nœuds\\
+$n_f$ : nombre de nœuds fournisseurs\\
+$n_p$ : nombre de nœuds plates-formes\\
+$n_c$ : nombre de nœuds clients \newline
 
 $b_i$ : demande ou disponibilité du n\oe{}ud\\
 $g_i$ : Coût unitaire de transbordement\\
@@ -93,28 +93,39 @@ $ (C3):\ \forall (i,j)\in n^2,\ \sum_{k=1}^{n_c} y_{i,j,k} + \sum_{k=1}^{n_f} y_
 $ (C4):\ \forall (i,j,k)\in n^3,\ y_{i,j,k} \not= 0,\ 
 	t_{i,j} + t_{j,k} + s_j \leq T$\\
 
-\chapter{Résolution algoritmique}
-\section{Algoritme utilisé}
+\chapter{Résolution algorithmique}
+\section{Algorithme utilisé}
 
-\parindent=0em
-Pour résoudre ce problème, un algoritme de type Branch and Bound sera utilisé.
+Pour résoudre ce problème, un algorithme de type Branch and Bound sera utilisé.
 Cela consiste à séparer en deux l'ensemble des solutions selon s'il ont fait un choix ou son contraire.
-Certains choix sont évités s'ils possèdent une borne minimal de l'objectif plus grand qu'une solution déjà éxistante. 
+Certains choix sont évités s'ils possèdent une borne minimal de l'objectif plus grand qu'une solution déjà existante. 
 
-\section{Problèmes à résoudres}
-En premier lieu il est nécessaire de calculer une permière solution. 
-Cela permet d'éviter toutes les solutions plus mauvaises que cette permière.
+\section{Problèmes à résoudre}
+En premier lieu il est nécessaire de calculer une première solution. 
+Cela permet d'éviter toutes les solutions plus mauvaises que cette première.
 Plus cette première solution sera proche de la solution finale, 
 plus il sera facile de converger rapidement vers la solution optimale car un plus grand nombre de choix seront évités.
 \newline{}
 \newline{}
 Ensuite, une borne minimum la plus élevée possible doit être définie 
-pour permetre d'éliminer les solution moins efficace que la solution déjà existante. 
-Tout le temps de résolution du problème est dépendant de ces deux algoritmes, 
+pour permettre d'éliminer les solution moins efficace que la solution déjà existante. 
+Tout le temps de résolution du problème est dépendant de ces deux algorithmes, 
 qui sont le choix d'une première solution efficace et le calcul d'une borne inférieure. 
 \newline{}
 \newline{}
 Ensuite, il est possible d'éliminer certains choix lorsqu'il n'est pas possible de résoudre le problème 
 à partir d'un sous-ensemble en solutions, cela permet encore un gain de temps non négligeable dans la résolution.
+
+\section{Méthodes utilisées}
+\subsection{Solution initiale}
+
+
+\subsection{Borne minimale}
+
+
+
+\subsection{Solutions déduites}
+
+
 
 \end{document}

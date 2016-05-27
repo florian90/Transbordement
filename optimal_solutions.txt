@@ -22,7 +22,7 @@ data/tshp100-03.txt : 41521.82726974
 data/tshp100-04.txt : infeasible
 data/tshp100-05.txt : infeasible
 data/tshp500-01.txt : 171155.5258523
-data/tshp500-02.txt : 
-data/tshp500-03.txt : 
-data/tshp500-04.txt : 
-data/tshp500-05.txt : 
+data/tshp500-02.txt :
+data/tshp500-03.txt :
+data/tshp500-04.txt :
+data/tshp500-05.txt :
