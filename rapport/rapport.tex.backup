@@ -9,14 +9,18 @@
 \author{Staine Florian}
 \date\today
 
-\setlength{\oddsidemargin}{10pt}
-\setlength{\evensidemargin}{10pt}
-
-\setlength{\headheight}{0pt}
-\setlength{\topmargin}{0pt}
-\setlength{\headsep}{0pt}
-
-\setlength{\footskip}{0pt}
+\setlength{\hoffset}{-18pt}        
+\setlength{\oddsidemargin}{0pt} 	% Marge gauche sur pages impaires
+\setlength{\evensidemargin}{9pt} 	% Marge gauche sur pages paires
+\setlength{\marginparwidth}{54pt} 	% Largeur de note dans la marge
+\setlength{\textwidth}{485pt} 		% Largeur de la zone de texte (17cm)
+\setlength{\voffset}{-18pt} 		% Bon pour DOS
+\setlength{\marginparsep}{7pt} 		% Séparation de la marge
+\setlength{\topmargin}{0pt} 		% Pas de marge en haut
+\setlength{\headheight}{5pt} 		% Haut de page
+\setlength{\headsep}{5pt} 		% Entre le haut de page et le texte
+\setlength{\footskip}{27pt} 		% Bas de page + séparation
+\setlength{\textheight}{708pt} 		% Hauteur de la zone de texte (25cm)
 
 \begin{document}
 \maketitle
@@ -24,11 +28,10 @@
 
 \chapter{Objectif}
 L'objectif de ce projet est de résoudre un problème d'optimisation exacte, 
-dérivé d'un problème classique en recherche opérationelle.\\
-Le cas étudié est celui d'un problème de transbordement avec conditions.\\
+dérivé d'un problème de transport. 
 \section{Problème}
 En plus de devoir transiter d'un fournisseur à un client, 
-les ressources doivent passer par une plateforme de transbrdement.
+les ressources doivent passer par une plateforme de transbordement.
 
 \paragraph{Chaque arc possède : }
 \begin{itemize}
@@ -45,25 +48,25 @@ les ressources doivent passer par une plateforme de transbrdement.
 
 Le coût total est constitué de la somme de plusieurs coûts :\\
 En effet, si un arc transporte un ou plusieurs produit, son coût fixe sera pris en compte, 
-en plus du coût unitaire qui dépendra du nombre de ressources transportés.
+en plus du coût unitaire multiplié par le nombre de produits transportés.
 Pour chaque produit transitant par une plateforme, un coût unitaire de transbordement sera ajouté au coût total.\\
 
 Nous avons aussi d'autres contraintes que dans le problème initial.\\
-Tout d'abbord, les arc ont tous une capacité maximale, ce qui signifique 
+Tout d'abord, les arc ont tous une capacité maximale, ce qui signifie que 
 qu'il ne peut transiter plus de produit que la capacité maximale. 
 Les arc sont utilisés au maximum une fois, ils ne peut pas y avoir des aller-retour 
 pour transporter plus de ressources.\\
 Un temps maximal de transport devra être respecté pour le transport de toutes les ressources.
-De plsu, tous les produits partent au même moment et sont transportés en parallèles. 
+De plus, tous les produits partent au même moment et sont transportés en parallèles. 
 Cela signifie que pour chaque cheminement emprunté pour atteindre les clients,
 les temps de transport plus le temps de transbordement doivent être inférieurs au temps maximum autorisé.
 
 \chapter{Modèle mathématique}
 \section{Paramètres}
-$n$ : nombre total de noeuds\\
-$n_f$ : nombre de noeuds fournisseurs\\
-$n_p$ : nombre de noeuds plates-formes\\
-$n_c$ : nombre de noeuds clients \newline
+$n$ : nombre total de nœuds\\
+$n_f$ : nombre de nœuds fournisseurs\\
+$n_p$ : nombre de nœuds plates-formes\\
+$n_c$ : nombre de nœuds clients \newline
 
 $b_i$ : demande ou disponibilité du n\oe{}ud\\
 $g_i$ : Coût unitaire de transbordement\\
@@ -81,7 +84,7 @@ $y_{i,j,k}$ : Nombre de produits transportés par la route $(i,j)\ (j,k)$\\
 \section{Objectif}
 $ min\ z = \sum_{i=1,\ j=1,\ x_{i,j}\not=0\ }^{n_f,\ n_p}
 	(x_{i,j} \cdot h_{i,j} + c_{i,j} + x_{i,j} \cdot g_j) 
-	    + \sum_{j=1,\ k=1,\ x{i,j} \not=0}^{n_p,\ n_c}(x_{j,k} \cdot h_{j,k} + c_{j,k}$
+	    + \sum_{j=1,\ k=1,\ x{i,j} \not=0}^{n_p,\ n_c}(x_{j,k} \cdot h_{j,k} + c_{j,k})$
 
 \section{Contraintes}
 $ (C1):\ \forall (i,j)\in n^2,\ x_{i,j} \leq u_{i,j} $ \\
@@ -90,20 +93,45 @@ $ (C3):\ \forall (i,j)\in n^2,\ \sum_{k=1}^{n_c} y_{i,j,k} + \sum_{k=1}^{n_f} y_
 $ (C4):\ \forall (i,j,k)\in n^3,\ y_{i,j,k} \not= 0,\ 
 	t_{i,j} + t_{j,k} + s_j \leq T$\\
 
-\chapter{Résolution algoritmique}
-\section{Algoritme utilisé}
+\chapter{Résolution algorithmique}
+\section{Algorithme utilisé}
 
-Pour résoudre ce problème, un algoritme de type Branch and Bound sera utilisé.
-Cela consiste à séparer 
+Pour résoudre ce problème, un algorithme de type Branch and Bound sera utilisé.
+Cela consiste à séparer en deux l'ensemble des solutions selon s'il ont fait un choix ou son contraire.
+Certains choix sont évités s'ils possèdent une borne minimal de l'objectif plus grand qu'une solution déjà existante. 
 
-Il sera alors nécessaire de résoudre différents problématiques.\\
-
-En premier lieu il est nécessaire de calculer une permière solution. 
-Ceci permettant d'éviter toutes les solutions plus mauvaises que cette permière.
-Plus cette première solution sera proche de la solution, 
-plus il sera facile de converger vers la solution finale car plus de solution non optimales seront évités.
+\section{Problèmes à résoudre}
+En premier lieu il est nécessaire de calculer une première solution. 
+Cela permet d'éviter toutes les solutions plus mauvaises que cette première.
+Plus cette première solution sera proche de la solution finale, 
+plus il sera facile de converger rapidement vers la solution optimale car un plus grand nombre de choix seront évités.
+\newline{}
+\newline{}
 Ensuite, une borne minimum la plus élevée possible doit être définie 
-pour permetre d'éliminer un maximum de solutions peu économes.
+pour permettre d'éliminer les solution moins efficace que la solution déjà existante. 
+Tout le temps de résolution du problème est dépendant de ces deux algorithmes, 
+qui sont le choix d'une première solution efficace et le calcul d'une borne inférieure. 
+\newline{}
+\newline{}
+Ensuite, il est possible d'éliminer certains choix lorsqu'il n'est pas possible de résoudre le problème 
+à partir d'un sous-ensemble en solutions, cela permet encore un gain de temps non négligeable dans la résolution.
+
+\section{Méthodes utilisées}
+\subsection{Solution initiale}
+Il n'y a pas à proprement parler de solution initialie qui est trouvée grace à une méthode différente.\\
+Cependant, une sélection différente est faite sur les arcs selon si on a déjà trouvé une solution initiale ou pas.\\
+En effet, les chemins sont choisis de manière à maximiser le nombre de ressouces transportés, 
+ce qui permet de converger plus rapidement vers une solution initialie, même si celle-ci n'est pas d'excellente qualité.\\
+En effet, dans un Branch and Bound, l'ordre des choix n'a pas d'incidence sur la meilleur solution trouvée 
+du fait que toutes les possibilités sont envisagés 
+(Même si le principe de l'algorithme est évidement de couper le plus haut possible dans l'arbre des solutions 
+pour éviter de perdre du temps dans des solutions loins de l'optimum.) \\
+
+\subsection{Borne minimale}
+
+
+\subsection{Solutions déduites}
+
 
 
 \end{document}
