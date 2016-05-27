@@ -122,10 +122,11 @@ Il n'y a pas à proprement parler de solution initialie qui est trouvée grace �
 Cependant, une sélection différente est faite sur les arcs selon si on a déjà trouvé une solution initiale ou pas.\\
 En effet, les chemins sont choisis de manière à maximiser le nombre de ressouces transportés, 
 ce qui permet de converger plus rapidement vers une solution initialie, même si celle-ci n'est pas d'excellente qualité.\\
-En effet, dans un Branch and Bound, l'ordre des choix n'a pas d'incidence sur la meilleur solution trouvée 
-du fait que toutes les possibilités sont envisagés 
-(Même si le principe de l'algorithme est évidement de couper le plus haut possible dans l'arbre des solutions 
-pour éviter de perdre du temps dans des solutions loins de l'optimum.) \\
+
+Même si le principe de l'algorithme est évidement de couper le plus haut possible dans l'arbre des solutions 
+pour éviter de perdre du temps dans des solutions loins de l'optimum, 
+l'ordre des choix n'a pas d'incidence sur la meilleur solution trouvée 
+du fait que toutes les possibilités sont envisagés puis testés. 
 
 \subsection{Borne minimale}
 

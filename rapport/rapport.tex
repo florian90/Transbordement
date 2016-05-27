@@ -126,13 +126,22 @@ ce qui permet de converger plus rapidement vers une solution initialie, même si
 Même si le principe de l'algorithme est évidement de couper le plus haut possible dans l'arbre des solutions 
 pour éviter de perdre du temps dans des solutions loins de l'optimum, 
 l'ordre des choix n'a pas d'incidence sur la meilleur solution trouvée 
-du fait que toutes les possibilités sont envisagés puis testés. 
+du fait que toutes les possibilités sont envisagés puis testés.\\
+
+Lorsqu'une solution initialie à été trouvée, l'algorithme se concentre sur la recherche des branches les moins chères
+permettant de se diriger vers la solution optimale.
 
 \subsection{Borne minimale}
-
+La borne minimale est calculé en additionnant le cout de la solution partielle ainsi que le cout minimum de transport pour les noeuds qui ne sont pas encores vides. \\
+Pour estimer le cout des noeuds, les arcs sont trillés suivant le coût de tranport de ceux-ci. [.......]
 
 \subsection{Solutions déduites}
 
 
+\subsection{Bugs - Problèmes rencontrés}
+\begin{itemize}
+ \item Tous les chemins ne sont pas testés
+ \item Le temps de résolution est souvent trop long, la solution optimale n'est pas forcément trouvée à temps
+\end{itemize}
 
 \end{document}
