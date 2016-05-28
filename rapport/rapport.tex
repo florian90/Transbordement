@@ -68,7 +68,7 @@ $n_f$ : nombre de nœuds fournisseurs\\
 $n_p$ : nombre de nœuds plates-formes\\
 $n_c$ : nombre de nœuds clients \newline
 
-$b_i$ : demande ou disponibilité du n\oe{}ud\\
+$b_i$ : demande ou disponibilité du nœud\\
 $g_i$ : Coût unitaire de transbordement\\
 $s_i$ : Temps de transbordement\newline
 
@@ -118,30 +118,42 @@ Ensuite, il est possible d'éliminer certains choix lorsqu'il n'est pas possible
 
 \section{Méthodes utilisées}
 \subsection{Solution initiale}
-Il n'y a pas à proprement parler de solution initialie qui est trouvée grace à une méthode différente.\\
+Il n'y a pas à proprement parler de solution initiale qui est trouvée grâce à une méthode différente.\\
 Cependant, une sélection différente est faite sur les arcs selon si on a déjà trouvé une solution initiale ou pas.\\
-En effet, les chemins sont choisis de manière à maximiser le nombre de ressouces transportés, 
-ce qui permet de converger plus rapidement vers une solution initialie, même si celle-ci n'est pas d'excellente qualité.\\
+En effet, les chemins sont choisis de manière à maximiser le nombre de ressources transportés, 
+ce qui permet de converger plus rapidement vers une solution initiale, même si celle-ci n'est pas d'excellente qualité.\\
 
 Même si le principe de l'algorithme est évidement de couper le plus haut possible dans l'arbre des solutions 
-pour éviter de perdre du temps dans des solutions loins de l'optimum, 
+pour éviter de perdre du temps dans des solutions loin de l'optimum, 
 l'ordre des choix n'a pas d'incidence sur la meilleur solution trouvée 
 du fait que toutes les possibilités sont envisagés puis testés.\\
 
-Lorsqu'une solution initialie à été trouvée, l'algorithme se concentre sur la recherche des branches les moins chères
+Lorsqu'une solution initiale à été trouvée, l'algorithme se concentre sur la recherche des branches les moins chères
 permettant de se diriger vers la solution optimale.
 
 \subsection{Borne minimale}
-La borne minimale est calculé en additionnant le cout de la solution partielle ainsi que le cout minimum de transport pour les noeuds qui ne sont pas encores vides. \\
-Pour estimer le cout des noeuds, les arcs sont trillés suivant le coût de tranport de ceux-ci. [.......]
+La borne minimale est calculé en additionnant le cout de la solution partielle ainsi que le cout minimum de transport pour les nœuds qui ne sont pas encore vides. \\
+Pour estimer le cout des nœuds, les arcs sont tillés suivant leur coût de transport. 
+Ensuite, on prends les chemins par ordre du moins chère au plus chère
+jusqu'à ce que toutes les ressources soient transportées. 
 
 \subsection{Solutions déduites}
+Le principe du Branch and Bound est de réduire l'ensemble des solutions en limitant la liberté sur certaines variables. \\
+Ici, la recherche de chemins est limité par une liste de chemins évités, chemins que l'on ne peut pas emprunter.\\
+Lors de la recherche de chemins, si tous les chemins évités ne  peuvent pas être sélectionnés. 
 
+\subsection{Bugs connus, limites du programme et problèmes rencontrés}
+Lors de la recherche de chemin à emprunter, toutes les possibilités ne sont pas testés.
+En effet, seul la valeur maximale d'utilisation d'un chemin est testé, 
+et si celle ci fait partie de la liste des chemins évités, elle est retirée. \\
+Cependant, il est possible qu'un même chemin avec une quantité transportée inférieure
+soit utilisable mais ne soit pas considérée dans les chemins possibles.\\
+En considérant aussi ceux-ci, le temps de calcul est souvent beaucoup plus long et ne permettait,
+dans un grand nombre de cas, même pas d'obtenir une solution initiale. \\ \hbox
 
-\subsection{Bugs - Problèmes rencontrés}
-\begin{itemize}
- \item Tous les chemins ne sont pas testés
- \item Le temps de résolution est souvent trop long, la solution optimale n'est pas forcément trouvée à temps
-\end{itemize}
+L'algorithme actuellement en place est souvent trop lent pour permettre de trouver des solutions 
+aux problèmes de taille supérieur à 50 nœuds. 
+Cela vient en partie de la relativement faible efficacité de l'élimination des solutions, 
+ce qui conduit à l'évaluation d'un grand nombre de possibilités
 
 \end{document}

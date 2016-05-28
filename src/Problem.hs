@@ -58,12 +58,13 @@ data Problem = Problem {
 -}
 newProblem = Problem "" 0 0 0 Map.empty Map.empty Map.empty Map.empty Nothing []
 
-{-
+
 instance Show Problem where
     show pb = pb_name pb ++ " : \n"
         ++ showMap (pb_nodes pb)
         ++ showMap (pb_edges pb)
 
+{-
 {-
     Detailed version to see every detail of the problem
 -}
