@@ -117,9 +117,16 @@ Ensuite, il est possible d'éliminer certains choix lorsqu'il n'est pas possible
 à partir d'un sous-ensemble en solutions, cela permet encore un gain de temps non négligeable dans la résolution.
 
 \section{Méthodes utilisées}
+\subsection{Langage utilisé}
+Pour la réalisation du projet, le langage Haskell (\url{https://www.haskell.org/} à été utilisé. 
+Il s'agit d'un langage fonctionnel pur, ce qui est une approche 
+totalement différente de la programmation orientée objet. \\
+Le compilateur utilisé est le plus courant : GHC (\url{https://www.haskell.org/ghc/}
+Le but était de découvrir la programmation fonctionnelle, ainsi que ses avantages et inconvénients, à travers un projet concret, 
+car c'est un paradigme que l'on n'a pas l'habitude de voir dans nos différents cours. 
+
 \subsection{Solution initiale}
-Il n'y a pas à proprement parler de solution initiale qui est trouvée grâce à une méthode différente.\\
-Cependant, une sélection différente est faite sur les arcs selon si on a déjà trouvé une solution initiale ou pas.\\
+Il n'y a pas à proprement parler de solution initiale trouvée grâce à une méthode différente, cependant, le critère de choix sur les arcs n'est pas se même selon si on a déjà trouvé une solution initiale ou pas.\\
 En effet, les chemins sont choisis de manière à maximiser le nombre de ressources transportés, 
 ce qui permet de converger plus rapidement vers une solution initiale, même si celle-ci n'est pas d'excellente qualité.\\
 

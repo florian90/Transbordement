@@ -1,6 +1,7 @@
 module Problem (
     Problem(..),
     newProblem,
+    showCost,
     evaluate,
     getNode,
     getEdge,
@@ -172,7 +173,7 @@ costSolution Problem {pb_nodes=nodes, pb_edges=edges, pb_solution=sol} =
 newBestSolution :: Problem -> IO Problem
 newBestSolution pb = do
     let pb2 = pb {pb_bestSolution=pb_solution pb, pb_bestSolutionCost=Just(costSolution pb)}
-    putStrLn $ "New solution : " ++ showCost pb2
+    --putStrLn $ "New solution : " ++ showCost pb2
     return pb2
 
 {-

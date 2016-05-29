@@ -44,7 +44,7 @@ solveCommand maxTime fileName = do
     sol <- improveSolution pb (time + solvingTime) 0
     endTime <- Time.getCurrentTime >>= return . Time.utctDayTime
     if hasBestSolution sol
-        then putStrLn $ "Tab assignmenet : " ++ (show $ evaluate sol)
+        then putStrLn $ "Tab assignmenet (" ++ showCost sol ++ ") : "++ (show $ evaluate sol)
         else putStrLn $ "No best solution found"
     if endTime - time > solvingTime
         then putStrLn $ "Evaluation stopped after " ++ show solvingTime
