@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# cd ~/dev/glsdsp-samebatch-supplychain/trunk/
+
+export ROOT_DIR=.
+export CLASS_DIR=$ROOT_DIR/bin
+export SRC_DIR="src/"
+
+# Need ghc compiler
+ghc -O2 $SRC_DIR/*.hs -o $CLASS_DIR/Main -outputdir $CLASS_DIR
+
+# Remove the intermediary files
+rm $CLASS_DIR/*.hi $CLASS_DIR/*.o
+
+echo FIN DU SCRIPT
+
+exit

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+export ROOT_DIR=.
+export CLASS_DIR=$ROOT_DIR/bin
+export CLASSPATH=$CLASS_DIR
+
+echo $CLASS_DIR/Main $1 $2 $3 $4 $5 $6 $7 $8 $9
+$CLASS_DIR/Main $1 $2 $3 $4 $5 $6 $7 $8 $9
+
+echo FIN DU SCRIPT
+exit

@@ -61,10 +61,10 @@ printHelp = do
     putStrLn "Where options are: "
 
     putStrLn "\t-s, --solve filename: "
-    putStrLn "\t\tSolve the problem stored in the file \'../data/filename\' with the standard time"
+    putStrLn "\t\tSolve the problem stored in the file \'filename\' with the standard time"
 
     putStrLn "\t-ts, --time-solve time filename: "
-    putStrLn "\t\tSolve the problem stored in the file \'../data/filename\' in less than `time` seconds"
+    putStrLn "\t\tSolve the problem stored in the file \'filename\' in less than `time` seconds"
 
 {-
     Get the time to solve the problem

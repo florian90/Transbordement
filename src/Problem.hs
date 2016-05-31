@@ -215,7 +215,7 @@ copyBestSol pb Problem {pb_bestSolution=best, pb_bestSolutionCost=cost} = pb{pb_
 getPb :: String -> IO Problem
 getPb fileName = do
     putStrLn $ "Reading the file " ++ fileName ++ "..."
-    file <- openFile ("../data/"++fileName) ReadMode
+    file <- openFile fileName ReadMode
     lineReader file newProblem
 
 {-
